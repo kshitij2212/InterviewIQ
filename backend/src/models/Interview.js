@@ -27,8 +27,8 @@ const questionSchema = new mongoose.Schema(
     score: {
       type: Number,
       min: 0,
-      max: 10,
-      default: null,
+      max: 100,
+      required: false,
     },
 
     duration: {
@@ -91,6 +91,7 @@ const interviewSchema = new mongoose.Schema(
     currentQuestionIndex: {
       type: Number,
       default: 0,
+      min: 0
     },
 
     overallScore: {
@@ -108,6 +109,7 @@ const interviewSchema = new mongoose.Schema(
       type: String,
       enum: ['in-progress', 'completed'],
       default: 'in-progress',
+      index: true
     },
   },
   {
