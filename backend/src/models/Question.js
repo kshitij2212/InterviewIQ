@@ -1,5 +1,5 @@
 const mongoose = require('mongoose')
-const { VALID_ROLES, LEVELS, QUESTION_TYPES } = require('../config/constants')
+const { VALID_ROLES, LEVELS, QUESTION_TYPES, ROLE_SPECIALIZATION_MAP } = require('../config/constants')
 
 function validateSpecialization(role, specialization) {
     const allowedSpecs = ROLE_SPECIALIZATION_MAP[role]
@@ -78,11 +78,6 @@ const questionSchema = new mongoose.Schema(
         expectedKeywords: {
             type: [String],
             default: []
-        },
-        hint: {
-            type: String,
-            trim: true,
-            default: ''
         },
         active: {
             type: Boolean,

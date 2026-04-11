@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 const bcrypt   = require('bcrypt')
-const { PLAN_TYPES } = require('../config/constants')
+const { PLAN_TYPES, DAILY_INTERVIEW_LIMIT } = require('../config/constants')
 
 const userSchema = new mongoose.Schema(
     {
@@ -27,6 +27,15 @@ const userSchema = new mongoose.Schema(
             type: String,
             unique: true,
             sparse: true,
+            default: null
+        },
+        role: {
+            type: String,
+            enum: ['user', 'admin'],
+            default: 'user'
+        },
+        avatar: {
+            type: String,
             default: null
         },
         planType: {
@@ -116,7 +125,7 @@ userSchema.methods.canStartInterview = function () {
         ? 0
         : this.dailyInterviewCount
 
-    return this.isProActive() || effectiveCount < 5
+    return this.isProActive() || effectiveCount < DAILY_INTERVIEW_LIMIT
 }
 
 module.exports = mongoose.model('User', userSchema)
