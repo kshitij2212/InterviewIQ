@@ -56,6 +56,7 @@ Return ONLY a valid JSON array, no markdown, no explanation, no extra text:
         .filter(q => q.text && typeof q.text === 'string' && q.text.trim())
         .map(q => ({
             text: q.text.trim(),
+            normalizedText: normalizeText(q.text),
             role,
             specialization: specialization || null,
             level,

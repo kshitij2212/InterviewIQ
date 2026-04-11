@@ -103,10 +103,9 @@ async function evaluateAnswer({ questionText, transcript, expectedKeywords, stat
     const keywordScore = getKeywordScore(transcript, safeKeywords)
     const llmResult = await evaluateWithLLM({ questionText, transcript, expectedKeywords: safeKeywords })
 
-    const finalScore = Math.min(
-        Math.round((0.6 * llmResult.score + 0.4 * keywordScore)),
-        SCORE_RANGE.max
-    )
+    const finalScore = safeKeywords.length > 0
+        ? Math.min(Math.round(0.6 * llmResult.score + 0.4 * keywordScore), SCORE_RANGE.max)
+        : Math.round(llmResult.score)
 
     return {
         score: finalScore,
