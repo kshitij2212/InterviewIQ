@@ -1,142 +1,152 @@
 const mongoose = require('mongoose')
-
-const questionSchema = new mongoose.Schema(
-  {
-    text: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    expectedKeywords: {
-      type: [String],
-      default: [],
-    },
-
-    hint: {
-      type: String,
-      default: null,
-    },
-
-    answer: {
-      type: String,
-      default: null,
-      trim: true,
-    },
-
-    score: {
-      type: Number,
-      min: 0,
-      max: 100,
-      required: false,
-    },
-
-    duration: {
-      type: Number,
-      default: 0,
-    },
-
-    feedback: {
-      strengths:    { type: [String], default: [] },
-      improvements: { type: [String], default: [] },
-      suggestion:   { type: String,   default: null },
-    },
-
-    breakdown: {
-      content:       { type: Number, default: null },
-      keywords:      { type: Number, default: null },
-      communication: { type: Number, default: null },
-    },
-  },
-  { _id: true }
-)
+const { VALID_ROLES, LEVELS, INTERVIEW_TYPES, INTERVIEW_STATUS } = require('../config/constants')
 
 const interviewSchema = new mongoose.Schema(
-  {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-      index: true,
-    },
+    {
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+            index: true
+        },
 
-    role: {
-      type: String,
-      required: [true, 'Role is required'],
-      trim: true,
-    },
+        role: {
+            type: String,
+            required: [true, 'Role is required'],
+            trim: true,
+            lowercase: true,
+            enum: {
+                values: VALID_ROLES,
+                message: 'Invalid role: {VALUE}'
+            }
+        },
 
-    level: {
-      type: String,
-      required: [true, 'Level is required'],
-      enum: ['Fresher', 'Junior', 'Senior'],
-    },
+        specialization: {
+            type: String,
+            trim: true,
+            lowercase: true,
+            default: null
+        },
 
-    type: {
-      type: String,
-      required: [true, 'Interview type is required'],
-      enum: ['Technical', 'HR', 'Mixed'],
-    },
+        level: {
+            type: String,
+            required: [true, 'Level is required'],
+            enum: {
+                values: LEVELS,
+                message: 'Level must be: fresher | junior | senior'
+            }
+        },
 
-    resumeSkills: {
-      type: [String],
-      default: [],
-    },
+        type: {
+            type: String,
+            required: [true, 'Interview type is required'],
+            enum: {
+                values: INTERVIEW_TYPES,
+                message: 'Type must be: technical | hr'
+            }
+        },
 
-    questions: {
-      type: [questionSchema],
-      default: [],
-    },
+        questionIds: {
+            type: [mongoose.Schema.Types.ObjectId],
+            ref: 'Question',
+            default: [],
+            validate: [
+                {
+                    validator: function (arr) { return arr.length >= 1 },
+                    message: 'Interview must have at least one question'
+                },
+                {
+                    validator: function (arr) {
+                        const ids = arr.map(id => id.toString())
+                        return ids.length === new Set(ids).size
+                    },
+                    message: 'questionIds must be unique — duplicate question detected'
+                },
+                {
+                    validator: function (arr) {
+                        return arr.every(id => mongoose.Types.ObjectId.isValid(id))
+                    },
+                    message: 'questionIds contains invalid ObjectId'
+                }
+            ]
+        },
 
-    currentQuestionIndex: {
-      type: Number,
-      default: 0,
-      min: 0
-    },
+        answerIds: {
+            type: [mongoose.Schema.Types.ObjectId],
+            ref: 'Answer',
+            default: []
+        },
 
-    overallScore: {
-      type: Number,
-      default: null,
-    },
+        currentQuestionIndex: {
+            type: Number,
+            default: 0,
+            min: 0
+        },
 
-    overallFeedback: {
-      strengths:    { type: [String], default: [] },
-      improvements: { type: [String], default: [] },
-      suggestion:   { type: String,   default: null },
-    },
+        overallScore: {
+            type: Number,
+            min: 0,
+            max: 10,
+            default: null
+        },
 
-    status: {
-      type: String,
-      enum: ['in-progress', 'completed'],
-      default: 'in-progress',
-      index: true
+        overallFeedback: {
+            strengths:    { type: [String], default: [] },
+            improvements: { type: [String], default: [] },
+            suggestion:   { type: String,   default: null }
+        },
+
+        status: {
+            type: String,
+            enum: {
+                values: INTERVIEW_STATUS,
+                message: 'Status must be: in_progress | completed | abandoned'
+            },
+            default: 'in_progress',
+            index: true
+        },
+
+        completedAt: {
+            type: String,
+            default: null
+        }
     },
-  },
-  {
-    timestamps: true,
-    toJSON: {
-      virtuals: true,
-      versionKey: false,
-      transform: function (doc, ret) {
-        ret.id = ret._id.toString()
-        delete ret._id
-      },
-    },
-  }
+    {
+        timestamps: true,
+        toJSON: {
+            virtuals: true,
+            versionKey: false,
+            transform: function (doc, ret) {
+                ret.id = ret._id.toString()
+                delete ret._id
+            }
+        }
+    }
 )
 
-interviewSchema.methods.calculateOverallScore = function () {
-  const answered = this.questions.filter(q => q.score !== null)
-  if (answered.length === 0) return 0
-  const total = answered.reduce((sum, q) => sum + q.score, 0)
-  return parseFloat((total / answered.length).toFixed(2))
-}
-
 interviewSchema.pre('save', function (next) {
-  if (this.isModified('questions')) {
-    this.overallScore = this.calculateOverallScore()
-  }
-  next()
+    const { ROLE_SPECIALIZATION_MAP } = require('../config/roles')
+    const allowedSpecs = ROLE_SPECIALIZATION_MAP[this.role]
+
+    if (allowedSpecs !== null && !this.specialization) {
+        return next(
+            new Error(`Specialization required for role "${this.role}". Allowed: ${allowedSpecs.join(', ')}`)
+        )
+    }
+    if (allowedSpecs !== null && this.specialization && !allowedSpecs.includes(this.specialization)) {
+        return next(
+            new Error(`Invalid specialization "${this.specialization}" for role "${this.role}". Allowed: ${allowedSpecs.join(', ')}`)
+        )
+    }
+
+    if (this.isModified('status') && this.status === 'completed' && !this.completedAt) {
+        this.completedAt = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
+    }
+
+    next()
 })
+
+interviewSchema.index({ userId: 1, createdAt: -1 })
+interviewSchema.index({ status: 1, role: 1, level: 1 })
 
 module.exports = mongoose.model('Interview', interviewSchema)

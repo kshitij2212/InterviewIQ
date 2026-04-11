@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
-const bcrypt = require('bcrypt')
+const bcrypt   = require('bcrypt')
+const { PLAN_TYPES } = require('../config/constants')
 
 const userSchema = new mongoose.Schema(
     {
@@ -14,10 +15,7 @@ const userSchema = new mongoose.Schema(
             unique: true,
             trim: true,
             lowercase: true,
-            match: [
-                /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-                'Please enter a valid email'
-            ]
+            match: [/^\S+@\S+\.\S+$/,'Please enter a valid email']
         },
         password: {
             type: String,
@@ -31,10 +29,9 @@ const userSchema = new mongoose.Schema(
             sparse: true,
             default: null
         },
-
         planType: {
             type: String,
-            enum: ['free', 'pro'],
+            enum: PLAN_TYPES,
             default: 'free'
         },
         planExpiresAt: {
@@ -55,8 +52,9 @@ const userSchema = new mongoose.Schema(
             type: Number,
             default: 0
         },
+
         dailyInterviewDate: {
-            type: Date,
+            type: String,
             default: null
         }
     },
@@ -80,8 +78,23 @@ const userSchema = new mongoose.Schema(
 userSchema.pre('save', async function (next) {
     if (!this.isModified('password')) return next()
     if (!this.password) return next()
-    const salt = await bcrypt.genSalt(10)
+    const salt    = await bcrypt.genSalt(10)
     this.password = await bcrypt.hash(this.password, salt)
+    next()
+})
+
+userSchema.pre('findOneAndUpdate', async function (next) {
+    const update = this.getUpdate()
+    if (!update.$set) update.$set = {}
+
+    const newPassword = update.$set.password ?? update.password
+
+    if (newPassword) {
+        const salt = await bcrypt.genSalt(10)
+        update.$set.password = await bcrypt.hash(newPassword, salt)
+        delete update.password
+    }
+
     next()
 })
 
@@ -97,20 +110,13 @@ userSchema.methods.isProActive = function () {
 }
 
 userSchema.methods.canStartInterview = function () {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
 
-    const lastDate = this.dailyInterviewDate
-        ? new Date(this.dailyInterviewDate).setHours(0, 0, 0, 0)
-        : null
+    const effectiveCount = this.dailyInterviewDate !== todayStr
+        ? 0
+        : this.dailyInterviewCount
 
-    if (lastDate !== today.getTime()) {
-        this.dailyInterviewCount = 0
-        this.dailyInterviewDate = today
-    }
-
-    const limit = this.isProActive() ? Infinity : 5
-    return this.dailyInterviewCount < limit
+    return this.isProActive() || effectiveCount < 5
 }
 
 module.exports = mongoose.model('User', userSchema)
