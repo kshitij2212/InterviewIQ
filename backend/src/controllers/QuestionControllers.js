@@ -75,18 +75,6 @@ async function createQuestion(req, res, next) {
 
         return res.status(201).json({ success: true, data: { question } })
     } catch (err) {
-        if (err.code === 11000) {
-            return res.status(409).json({
-                success: false,
-                message: 'Duplicate question already exists for this role/level/type'
-            })
-        }
-        if (err.name === 'ValidationError') {
-            return res.status(400).json({
-                success: false,
-                message: err.message
-            })
-        }
         next(err)
     }
 }
@@ -100,7 +88,6 @@ async function updateQuestion(req, res, next) {
             return res.status(404).json({ success: false, message: 'Question not found' })
         }
 
-        // Only update provided fields
         if (text             !== undefined) question.text             = text
         if (role             !== undefined) question.role             = role
         if (specialization   !== undefined) question.specialization   = specialization
@@ -109,22 +96,10 @@ async function updateQuestion(req, res, next) {
         if (expectedKeywords !== undefined) question.expectedKeywords = expectedKeywords
         if (active           !== undefined) question.active           = active
 
-        await question.save() // pre('save') hooks run — normalizedText + validation
+        await question.save()
 
         return res.status(200).json({ success: true, data: { question } })
     } catch (err) {
-        if (err.code === 11000) {
-            return res.status(409).json({
-                success: false,
-                message: 'Duplicate question already exists for this role/level/type'
-            })
-        }
-        if (err.name === 'ValidationError') {
-            return res.status(400).json({
-                success: false,
-                message: err.message
-            })
-        }
         next(err)
     }
 }
@@ -136,7 +111,6 @@ async function deleteQuestion(req, res, next) {
             return res.status(404).json({ success: false, message: 'Question not found' })
         }
 
-        // Soft delete — never hard delete, interviews reference questionIds
         question.active = false
         await question.save()
 

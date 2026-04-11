@@ -52,12 +52,6 @@ async function register(req, res, next) {
             data: { user: sanitizeUser(user) }
         })
     } catch (err) {
-        if (err.code === 11000) {
-            return res.status(409).json({
-                success: false,
-                message: 'Email already registered'
-            })
-        }
         next(err)
     }
 }
@@ -169,12 +163,6 @@ async function googleAuth(req, res, next) {
             data: { user: sanitizeUser(user) }
         })
     } catch (err) {
-        if (err.code === 11000) {
-            return res.status(409).json({
-                success: false,
-                message: 'Account conflict. Please try logging in with email.'
-            })
-        }
         next(err)
     }
 }

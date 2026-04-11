@@ -72,7 +72,6 @@ async function startInterview(req, res, next) {
 
         let attempts = 0
         while (questions.length < questionCount && attempts < 2) {
-            // FIX #4: Only generate the delta, not the full count again
             const needed = questionCount - questions.length
             await generateQuestions({ role, specialization, level, questionType, count: needed })
             questions = await Question.aggregate([
