@@ -17,12 +17,7 @@ Question: ${questionText}
 Answer: ${transcript}
 Expected Keywords: ${safeKeywords.join(', ')}
 
-Rules:
-- score must be 0 to 10
-- Be strict but fair
-- No extra text, no markdown
-
-Return ONLY valid JSON:
+Return ONLY valid JSON in this exact shape:
 {
   "score": number,
   "feedback": {
@@ -39,8 +34,12 @@ Return ONLY valid JSON:
     let raw
     try {
         const res = await groq.chat.completions.create({
-            model: 'llama3-70b-8192',
-            messages: [{ role: 'user', content: prompt }],
+            model: 'llama-3.3-70b-versatile',
+            messages: [
+                { role: 'system', content: 'You are a technical interviewer assistant. You only output valid JSON objects. Do not include markdown or explanations.' },
+                { role: 'user', content: prompt }
+            ],
+            response_format: { type: 'json_object' },
             temperature: 0.3
         })
         raw = res.choices[0]?.message?.content
@@ -50,13 +49,9 @@ Return ONLY valid JSON:
 
     if (!raw) throw new Error('Groq returned empty response')
 
-    const start = raw.indexOf('{')
-    const end = raw.lastIndexOf('}')
-    if (start === -1 || end === -1) throw new Error('Groq response contains no JSON object')
-
     let parsed
     try {
-        parsed = JSON.parse(raw.slice(start, end + 1))
+        parsed = JSON.parse(raw)
     } catch {
         throw new Error('Groq returned invalid JSON')
     }

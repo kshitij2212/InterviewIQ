@@ -12,24 +12,25 @@ async function generateQuestions({ role, specialization, level, questionType, co
         INTERVIEW_QUESTION_LIMITS.max
     )
 
-    const prompt = `Generate ${safeCount} interview questions.
-Role: ${role}
-Specialization: ${specialization || 'none'}
-Level: ${level}
-Type: ${questionType}
-Return ONLY a valid JSON array, no markdown, no explanation, no extra text:
-[
-  {
-    "text": "question here",
-    "expectedKeywords": ["keyword1", "keyword2"]
-  }
-]`
+    const prompt = `Generate exactly ${safeCount} interview questions for a ${level} ${role} role${specialization ? ` specializing in ${specialization}` : ''}.
+The questions must be of type: ${questionType}.
+
+Return a JSON object with a "questions" key containing the array. Each question MUST include at least 3-5 relevant technical keywords:
+{
+  "questions": [
+    { "text": "...", "expectedKeywords": ["keyword1", "keyword2", "keyword3", "keyword4"] }
+  ]
+}`
 
     let raw
     try {
         const response = await groq.chat.completions.create({
-            model: 'llama3-70b-8192',
-            messages: [{ role: 'user', content: prompt }],
+            model: 'llama-3.3-70b-versatile',
+            messages: [
+                { role: 'system', content: 'You are a technical interviewer. You only output valid JSON. You must return a JSON object with a "questions" key.' },
+                { role: 'user', content: prompt }
+            ],
+            response_format: { type: 'json_object' },
             temperature: 0.7
         })
         raw = response.choices[0]?.message?.content
@@ -38,21 +39,20 @@ Return ONLY a valid JSON array, no markdown, no explanation, no extra text:
     }
 
     if (!raw) throw new Error('Groq returned empty response')
-    const match = raw.match(/\[[\s\S]*?\]/)
-    if (!match) throw new Error('Groq response contains no JSON array')
 
     let parsed
     try {
-        parsed = JSON.parse(match[0])
+        parsed = JSON.parse(raw)
     } catch {
-        throw new Error('Groq returned invalid JSON — could not parse array')
+        throw new Error('Groq returned invalid JSON — could not parse object')
     }
 
-    if (!Array.isArray(parsed) || parsed.length === 0) {
+    const questionsArray = parsed.questions || parsed
+    if (!Array.isArray(questionsArray) || questionsArray.length === 0) {
         throw new Error('Groq returned empty or invalid array')
     }
 
-    const docs = parsed
+    const docs = questionsArray
         .filter(q => q.text && typeof q.text === 'string' && q.text.trim())
         .map(q => ({
             text: q.text.trim(),
