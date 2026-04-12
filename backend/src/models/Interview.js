@@ -1,5 +1,5 @@
 const mongoose = require('mongoose')
-const { VALID_ROLES, LEVELS, INTERVIEW_TYPES, INTERVIEW_STATUS } = require('../config/constants')
+const { VALID_ROLES, LEVELS, INTERVIEW_TYPES, INTERVIEW_STATUS, ROLE_SPECIALIZATION_MAP } = require('../config/constants')
 
 const interviewSchema = new mongoose.Schema(
     {
@@ -124,26 +124,19 @@ const interviewSchema = new mongoose.Schema(
     }
 )
 
-interviewSchema.pre('save', function (next) {
-    const { ROLE_SPECIALIZATION_MAP } = require('../config/roles')
+interviewSchema.pre('save', function () {
     const allowedSpecs = ROLE_SPECIALIZATION_MAP[this.role]
 
     if (allowedSpecs !== null && !this.specialization) {
-        return next(
-            new Error(`Specialization required for role "${this.role}". Allowed: ${allowedSpecs.join(', ')}`)
-        )
+        throw new Error(`Specialization required for role "${this.role}". Allowed: ${allowedSpecs.join(', ')}`)
     }
     if (allowedSpecs !== null && this.specialization && !allowedSpecs.includes(this.specialization)) {
-        return next(
-            new Error(`Invalid specialization "${this.specialization}" for role "${this.role}". Allowed: ${allowedSpecs.join(', ')}`)
-        )
+        throw new Error(`Invalid specialization "${this.specialization}" for role "${this.role}". Allowed: ${allowedSpecs.join(', ')}`)
     }
 
     if (this.isModified('status') && this.status === 'completed' && !this.completedAt) {
         this.completedAt = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
     }
-
-    next()
 })
 
 interviewSchema.index({ userId: 1, createdAt: -1 })

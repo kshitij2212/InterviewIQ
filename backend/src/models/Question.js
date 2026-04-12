@@ -98,9 +98,9 @@ const questionSchema = new mongoose.Schema(
     }
 )
 
-questionSchema.pre('save', function (next) {
+questionSchema.pre('save', function () {
     const error = validateSpecialization(this.role, this.specialization)
-    if (error) return next(new Error(error))
+    if (error) throw new Error(error)
 
     if (!this.normalizedText || this.isModified('text')) {
         this.normalizedText = normalizeText(this.text)
@@ -109,11 +109,9 @@ questionSchema.pre('save', function (next) {
     if (this.isModified('expectedKeywords')) {
         this.expectedKeywords = normalizeKeywords(this.expectedKeywords)
     }
-
-    next()
 })
 
-questionSchema.pre(['updateOne', 'updateMany'], async function (next) {
+questionSchema.pre(['updateOne', 'updateMany'], async function () {
     this.options.runValidators = true
     this.options.context = 'query'
 
@@ -127,13 +125,13 @@ questionSchema.pre(['updateOne', 'updateMany'], async function (next) {
 
     if (incomingRole !== undefined || incomingSpecialization !== undefined) {
         const existing = await this.model.findOne(this.getQuery()).lean()
-        if (!existing) return next(new Error('Document not found'))
+        if (!existing) throw new Error('Document not found')
 
         const finalRole           = incomingRole           ?? existing.role
         const finalSpecialization = incomingSpecialization ?? existing.specialization
 
         const error = validateSpecialization(finalRole, finalSpecialization)
-        if (error) return next(new Error(error))
+        if (error) throw new Error(error)
     }
 
     if (incomingText !== undefined) {
@@ -146,8 +144,6 @@ questionSchema.pre(['updateOne', 'updateMany'], async function (next) {
 
     const rootFields = ['role', 'specialization', 'text', 'expectedKeywords']
     rootFields.forEach(field => delete update[field])
-
-    next()
 })
 
 questionSchema.index(

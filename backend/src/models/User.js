@@ -26,8 +26,7 @@ const userSchema = new mongoose.Schema(
         googleId: {
             type: String,
             unique: true,
-            sparse: true,
-            default: null
+            sparse: true
         },
         role: {
             type: String,
@@ -84,15 +83,14 @@ const userSchema = new mongoose.Schema(
     }
 )
 
-userSchema.pre('save', async function (next) {
-    if (!this.isModified('password')) return next()
-    if (!this.password) return next()
+userSchema.pre('save', async function () {
+    if (!this.isModified('password')) return
+    if (!this.password) return
     const salt    = await bcrypt.genSalt(10)
     this.password = await bcrypt.hash(this.password, salt)
-    next()
 })
 
-userSchema.pre('findOneAndUpdate', async function (next) {
+userSchema.pre('findOneAndUpdate', async function () {
     const update = this.getUpdate()
     if (!update.$set) update.$set = {}
 
@@ -103,8 +101,6 @@ userSchema.pre('findOneAndUpdate', async function (next) {
         update.$set.password = await bcrypt.hash(newPassword, salt)
         delete update.password
     }
-
-    next()
 })
 
 userSchema.methods.comparePassword = async function (enteredPassword) {
