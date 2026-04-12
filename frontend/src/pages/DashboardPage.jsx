@@ -1,0 +1,244 @@
+import React, { useState, useEffect, useRef } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuthStore } from '../store/authStore'
+import { useInterviewStore } from '../store/interviewStore'
+import {
+  Brain, Plus, Upload, BarChart2, Bookmark,
+  TrendingUp, Flame, Trophy, Calendar,
+  ChevronRight, Sparkles, AlertCircle, CheckCircle2,
+  Loader2, Clock, X
+} from 'lucide-react'
+import { interviewApi } from '../api/interview'
+import Header from '../components/landing/Header'
+import Footer from '../components/landing/Footer'
+import { motion, AnimatePresence } from 'framer-motion'
+
+const DAILY_GOAL = 5
+
+function getGreeting() {
+  const hour = new Date().getHours()
+  if (hour >= 4 && hour < 12) return 'Good morning'
+  if (hour >= 12 && hour < 17) return 'Good afternoon'
+  if (hour >= 17 && hour < 21) return 'Good evening'
+  return 'Burning the midnight oil'
+}
+
+function scoreStyle(score) {
+  if (score >= 9) return 'bg-emerald-50 text-emerald-600'
+  if (score >= 8) return 'bg-indigo-50 text-indigo-600'
+  if (score >= 5) return 'bg-violet-50 text-violet-600'
+  return 'bg-slate-50 text-slate-500'
+}
+
+export default function DashboardPage() {
+  const user = useAuthStore(s => s.user)
+  const navigate = useNavigate()
+  const [loading, setLoading] = useState(true)
+  const [interviews, setInterviews] = useState([])
+  const [showGoalPopup, setShowGoalPopup] = useState(false)
+  
+  useEffect(() => {
+    async function loadHistory() {
+      try {
+        setLoading(true)
+        const { data } = await interviewApi.getHistory({ limit: 15 })
+        const fetchedInterviews = data.data.interviews || []
+        setInterviews(fetchedInterviews)
+        
+        const today = new Date().setHours(0,0,0,0)
+        const countToday = fetchedInterviews.filter(i => new Date(i.createdAt).getTime() > today).length
+        
+        if (countToday > 0 && countToday < DAILY_GOAL) {
+            setTimeout(() => setShowGoalPopup(true), 1500)
+        }
+      } catch (err) {
+        console.error('Failed to load history', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadHistory()
+  }, [])
+
+  const firstName = user?.name?.split(' ')[0] ?? 'there'
+  const hasHistory = interviews.length > 0
+
+  const totalInterviews = interviews.length
+  const avgScore = totalInterviews > 0 
+    ? (interviews.reduce((acc, curr) => acc + (curr.overallScore || 0), 0) / totalInterviews).toFixed(1)
+    : 0
+
+  const bestInterview = interviews.reduce((prev, current) => ((prev.overallScore || 0) > (current.overallScore || 0)) ? prev : current, { overallScore: 0, role: 'N/A' })
+  
+  const todayStart = new Date().setHours(0,0,0,0)
+  const sessionsToday = interviews.filter(i => new Date(i.createdAt).getTime() > todayStart).length
+  const goalLeft = Math.max(0, DAILY_GOAL - sessionsToday)
+
+  const stats = [
+    { label: 'Total sessions', value: totalInterviews, sub: 'Total practice cycles', icon: Calendar, color: 'text-indigo-500', bg: 'bg-indigo-50/80' },
+    { label: 'Average score', value: avgScore, sub: 'Across skills', icon: TrendingUp, color: 'text-violet-500', bg: 'bg-violet-50/80' },
+    { label: 'Best role', value: (bestInterview.overallScore || 0).toFixed(1), sub: bestInterview.role, icon: Trophy, color: 'text-emerald-500', bg: 'bg-emerald-50/80' },
+    { label: 'Practice day', value: '1', sub: 'Current streak', icon: Flame, color: 'text-orange-500', bg: 'bg-orange-50/80' },
+  ]
+
+  if (loading) return (
+    <div className="min-h-screen bg-white flex items-center justify-center">
+       <div className="w-16 h-16 border-4 border-accent/10 border-t-accent rounded-full animate-spin" />
+    </div>
+  )
+
+  return (
+    <div className="min-h-screen bg-background relative overflow-x-hidden">
+      <Header />
+      <div className="h-16" />
+
+      <AnimatePresence>
+        {showGoalPopup && (
+          <motion.div 
+            initial={{ y: 100, opacity: 0, x: '-50%' }}
+            animate={{ y: 0, opacity: 1, x: '-50%' }}
+            exit={{ y: 50, opacity: 0, x: '-50%' }}
+            className="fixed bottom-12 left-1/2 z-[100] w-[90%] max-w-sm bg-white p-7 rounded-[2.5rem] border border-accent/20 shadow-[0_30px_100px_-20px_rgba(99,102,241,0.25)] backdrop-blur-3xl"
+          >
+             <button onClick={() => setShowGoalPopup(false)} className="absolute top-4 right-4 text-slate-300 hover:text-slate-500 transition-colors">
+                <X className="w-5 h-5" />
+             </button>
+             <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-accent flex items-center justify-center shadow-lg shadow-accent/20">
+                   <Flame className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                   <h4 className="font-black uppercase text-[10px] tracking-widest text-accent">Daily Momentum</h4>
+                   <p className="text-sm font-black text-slate-900">{sessionsToday} of {DAILY_GOAL} sessions done</p>
+                </div>
+             </div>
+             <p className="text-[12px] font-bold leading-relaxed text-slate-500 mb-6 italic">
+                You've completed <span className="text-slate-900">{sessionsToday} sessions</span> today! Only <span className="text-accent font-black tracking-tight">{goalLeft} more</span> to reach your daily peak potential.
+             </p>
+             <button 
+                onClick={() => navigate('/interview/setup')}
+                className="w-full bg-accent text-white py-3.5 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-accent/90 transition-all active:scale-95 shadow-xl shadow-accent/20"
+             >
+                Finish Today's Goal
+             </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <main className="mx-auto max-w-7xl px-6 py-10 space-y-10">
+        {!hasHistory ? (
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="w-20 h-20 bg-accent/5 rounded-[2rem] flex items-center justify-center mb-8 border border-accent/10">
+               <Brain className="w-10 h-10 text-accent" />
+            </div>
+            <h2 className="text-3xl font-black tracking-tighter text-slate-900 mb-4 uppercase">Initialize Your Career</h2>
+            <p className="text-muted-foreground font-medium max-w-md mb-10 leading-relaxed">
+               You haven't completed any sessions yet. Mock interviews are the fastest way to refine your delivery and master technical keywords.
+            </p>
+            <button 
+                onClick={() => navigate('/interview/setup')}
+                className="bg-accent text-white h-14 px-10 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-accent/20 transition-all hover:scale-105 active:scale-95"
+            >
+               Build Your First Session
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-black tracking-tighter text-slate-900 uppercase">
+                  {getGreeting()}, <span className="text-accent">{firstName}</span> 👋
+                </h1>
+                <p className="mt-1 text-muted-foreground font-medium text-sm">
+                  Welcome back to your career intelligence center.
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button 
+                    onClick={() => navigate('/interview/setup')}
+                    className="flex items-center gap-2 rounded-2xl bg-accent px-8 h-12 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-accent/20 transition-all active:scale-95"
+                >
+                  <Plus className="h-4 w-4" /> Start New Interview
+                </button>
+              </div>
+            </div>
+
+            <section className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {stats.map(({ label, value, sub, icon: Icon, color, bg }) => (
+                <div key={label} className="rounded-[2.5rem] border border-slate-200/60 bg-white p-6 shadow-sm transition-all hover:shadow-md">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</span>
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${bg}`}>
+                      <Icon className={`h-5 w-5 ${color}`} />
+                    </div>
+                  </div>
+                  <div className="text-3xl font-black text-slate-900 tracking-tighter">{value}</div>
+                  <div className="mt-1 text-[10px] font-black uppercase tracking-widest text-slate-400 opacity-60 truncate">{sub}</div>
+                </div>
+              ))}
+            </section>
+
+            <div className="rounded-[2.5rem] border border-slate-200/60 bg-white shadow-sm overflow-hidden">
+               <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
+                  <h3 className="font-black text-xs uppercase tracking-widest text-slate-400">Recent Practice Cycles</h3>
+                  <BarChart2 className="w-5 h-5 text-slate-200" />
+               </div>
+               <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                     <thead className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        <tr>
+                          <th className="px-8 py-5">Target Role</th>
+                          <th className="px-8 py-5">Expertise Level</th>
+                          <th className="px-8 py-5 text-center">Proficiency</th>
+                          <th className="px-8 py-5">Date & Time</th>
+                          <th className="px-8 py-5 text-right">Action</th>
+                        </tr>
+                     </thead>
+                     <tbody className="divide-y divide-slate-100">
+                        {interviews.map((session) => (
+                           <tr key={session._id} className="group hover:bg-slate-50/50 transition-colors">
+                              <td className="px-8 py-6">
+                                 <div className="font-black text-sm text-slate-900 uppercase tracking-tight">{session.role}</div>
+                              </td>
+                              <td className="px-8 py-6">
+                                 <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest bg-slate-100/50 px-2.5 py-1 rounded inline-block border border-slate-200/50">
+                                    {session.level}
+                                 </div>
+                              </td>
+                              <td className="px-8 py-6 text-center">
+                                 <div className={`inline-flex items-center px-4 py-2 rounded-xl font-black text-xs ${scoreStyle(session.overallScore)}`}>
+                                    {(session.overallScore || 0).toFixed(1)} / 10
+                                 </div>
+                              </td>
+                              <td className="px-8 py-6">
+                                 <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-slate-700">
+                                       {new Date(session.updatedAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                                    </span>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
+                                       <Clock className="w-3 h-3" />
+                                       {new Date(session.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                 </div>
+                              </td>
+                              <td className="px-8 py-6 text-right">
+                                 <button 
+                                    onClick={() => navigate(`/interview/${session._id}/results`)}
+                                    className="p-3 rounded-2xl text-slate-300 hover:text-accent hover:bg-accent/5 transition-all group-hover:translate-x-1"
+                                 >
+                                    <ChevronRight className="w-5 h-5" />
+                                 </button>
+                              </td>
+                           </tr>
+                        ))}
+                     </tbody>
+                  </table>
+               </div>
+            </div>
+          </>
+        )}
+      </main>
+      <Footer />
+    </div>
+  )
+}
