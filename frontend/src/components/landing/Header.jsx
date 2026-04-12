@@ -1,21 +1,92 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, Check, Loader2 } from 'lucide-react'
 import { Button } from '../ui/Button'
-import { Link } from 'react-router-dom'
+import { useAuthStore } from '../../store/authStore'
+import { useInterviewStore } from '../../store/interviewStore'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 
-const NAV_ITEMS = ['Features', 'How It Works', 'Testimonials', 'Pricing']
+const NAV_ITEMS = [
+  { label: 'Dashboard', to: '/dashboard' },
+  { label: 'Interviews', to: '/interview/setup' },
+  { label: 'Resources', to: '/resources' },
+  { label: 'Settings', to: '/settings' },
+]
 
 export default function Header() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [active, setActive] = useState('')
+  const [editingName, setEditingName] = useState(false)
+  const [tempName, setTempName] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+  const inputRef = useRef(null)
+
+  const user = useAuthStore(s => s.user)
+  const isAuthenticated = useAuthStore(s => s.isAuthenticated)
+  const logout = useAuthStore(s => s.logout)
+  const updateName = useAuthStore(s => s.updateName)
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  const interviewStatus = useInterviewStore(s => s.status)
+  const isInterviewActive = interviewStatus === 'active'
+
+  const handleNavClick = (e, to) => {
+    if (isInterviewActive) {
+      const confirmLeave = window.confirm('Your interview is in progress. Leaving this page will discard your results. Are you sure you want to leave?')
+      if (!confirmLeave) {
+        e.preventDefault()
+        return
+      }
+    }
+    if (to) {
+        setOpen(false)
+        navigate(to)
+    }
+  }
+
+  const startEditing = (e) => {
+     e.preventDefault()
+     e.stopPropagation()
+     setTempName(user?.name || '')
+     setEditingName(true)
+  }
+
+  const saveName = async () => {
+     if (!tempName.trim() || tempName === user?.name) {
+        setEditingName(false)
+        return
+     }
+     setIsSaving(true)
+     const success = await updateName(tempName.trim())
+     setIsSaving(false)
+     setEditingName(false)
+  }
+
+  useEffect(() => {
+    if (editingName && inputRef.current) {
+       inputRef.current.focus()
+    }
+  }, [editingName])
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  useEffect(() => {
+    const path = location.pathname.split('/')?.[1] || ''
+    const map = {
+      '': 'Dashboard',
+      dashboard: 'Dashboard',
+      interviews: 'Interviews',
+      resources: 'Resources',
+      settings: 'Settings',
+    }
+    setActive(map[path] || '')
+  }, [location.pathname])
 
   return (
     <>
@@ -28,53 +99,102 @@ export default function Header() {
       >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
 
-          {/* Logo — text only, no icon */}
-          <Link to="/">
-            <span className="text-xl font-extrabold tracking-tighter">
+          <Link to="/" onClick={(e) => handleNavClick(e)}>
+            <span className="text-xl font-extrabold tracking-tighter uppercase">
               INTERVIEW<span className="text-accent">IQ</span>
             </span>
           </Link>
 
-          {/* Desktop nav — plain links, original size */}
           <nav className="hidden items-center gap-8 md:flex">
-            {NAV_ITEMS.map(item => (
-              <a
-                key={item}
-                href={`#${item.toLowerCase().replace(/\s+/g, '-')}`}
-                onClick={() => setActive(item)}
+            {NAV_ITEMS.map(({ label, to }) => (
+              <Link
+                key={label}
+                to={to}
+                onClick={() => setActive(label)}
                 className={`text-sm transition-colors duration-200 ${
-                  active === item
+                  active === label
                     ? 'text-foreground font-medium'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {item}
-              </a>
+                {label}
+              </Link>
             ))}
           </nav>
 
-          {/* Desktop CTA */}
           <div className="hidden items-center gap-4 md:flex">
-            <Link to="/login">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground hover:text-foreground"
-              >
-                Sign In
-              </Button>
-            </Link>
-            <Link to="/register">
-              <Button
-                size="sm"
-                className="bg-accent text-accent-foreground hover:bg-accent/90"
-              >
-                Get Started
-              </Button>
-            </Link>
+            {isAuthenticated ? (
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs uppercase tracking-tighter border border-indigo-200 shadow-sm">
+                     {user?.name ? user.name.split(' ').map(n=>n[0]).join('').slice(0,2) : 'U'}
+                  </div>
+                  
+                  <div className="relative group">
+                    <AnimatePresence mode="wait">
+                       {!editingName ? (
+                          <motion.span 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={startEditing}
+                            className="text-sm font-bold text-slate-800 cursor-pointer hover:text-accent border-b border-dashed border-slate-300 hover:border-accent transition-all pb-0.5"
+                          >
+                             {user?.name || 'User'}
+                          </motion.span>
+                       ) : (
+                          <motion.div 
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className="flex items-center gap-2"
+                          >
+                             <input 
+                                ref={inputRef}
+                                type="text"
+                                value={tempName}
+                                onChange={(e) => setTempName(e.target.value)}
+                                onBlur={saveName}
+                                onKeyDown={(e) => {
+                                   if (e.key === 'Enter') saveName()
+                                   if (e.key === 'Escape') setEditingName(false)
+                                }}
+                                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-accent/20 w-32"
+                             />
+                             {isSaving ? (
+                                <Loader2 className="w-4 h-4 text-accent animate-spin" />
+                             ) : (
+                                <Check className="w-3.5 h-3.5 text-emerald-50" />
+                             )}
+                          </motion.div>
+                       )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+                <button onClick={() => { logout(); navigate('/') }} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-accent transition-colors">Logout</button>
+              </div>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    Sign In
+                  </Button>
+                </Link>
+                <Link to="/register">
+                  <Button
+                    size="sm"
+                    className="bg-accent text-accent-foreground hover:bg-accent/90"
+                  >
+                    Get Started
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
-          {/* Hamburger */}
           <button
             className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-secondary/60 text-muted-foreground transition-colors hover:text-foreground md:hidden"
             onClick={() => setOpen(!open)}
@@ -95,7 +215,6 @@ export default function Header() {
         </div>
       </header>
 
-      {/* Mobile menu */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -106,35 +225,49 @@ export default function Header() {
             className="fixed left-4 right-4 top-[4.5rem] z-40 rounded-2xl border border-border bg-background/95 p-4 shadow-2xl backdrop-blur-xl md:hidden"
           >
             <nav className="flex flex-col gap-1">
-              {NAV_ITEMS.map((item, i) => (
-                <motion.a
-                  key={item}
+              {NAV_ITEMS.map(({ label, to }, i) => (
+                <motion.div
+                  key={label}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.04, duration: 0.2 }}
-                  href={`#${item.toLowerCase().replace(/\s+/g, '-')}`}
-                  onClick={() => { setActive(item); setOpen(false) }}
-                  className="rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 >
-                  {item}
-                </motion.a>
+                  <Link
+                    to={to}
+                    onClick={() => { setActive(label); setOpen(false) }}
+                    className="rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground block"
+                  >
+                    {label}
+                  </Link>
+                </motion.div>
               ))}
             </nav>
 
             <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4">
-              <Link to="/login" onClick={() => setOpen(false)}>
-                <Button variant="outline" size="sm" className="w-full justify-center">
-                  Sign In
-                </Button>
-              </Link>
-              <Link to="/register" onClick={() => setOpen(false)}>
-                <Button
-                  size="sm"
-                  className="w-full justify-center bg-accent text-accent-foreground hover:bg-accent/90"
-                >
-                  Get Started
-                </Button>
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  <Link to="/dashboard" onClick={() => setOpen(false)}>
+                    <Button variant="outline" size="sm" className="w-full justify-center">My Dashboard</Button>
+                  </Link>
+                    <button onClick={() => { logout(); setOpen(false); navigate('/') }} className="w-full rounded-md bg-secondary/60 py-2 text-sm">Logout</button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" onClick={() => setOpen(false)}>
+                    <Button variant="outline" size="sm" className="w-full justify-center">
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link to="/register" onClick={() => setOpen(false)}>
+                    <Button
+                      size="sm"
+                      className="w-full justify-center bg-accent text-accent-foreground hover:bg-accent/90"
+                    >
+                      Get Started
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </motion.div>
         )}

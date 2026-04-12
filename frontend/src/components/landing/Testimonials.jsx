@@ -2,12 +2,12 @@ import { Star } from 'lucide-react'
 import { Card } from '../ui/Card'
 
 const testimonials = [
-  { name: 'Sarah Chen', role: 'Software Engineer at Google', quote: 'Interview IQ helped me land my dream job at Google. The AI mock interviews were incredibly realistic.' },
-  { name: 'Marcus Johnson', role: 'Senior Developer at Meta', quote: 'The personalized feedback after each session helped me identify and fix my weak points quickly.' },
-  { name: 'Emily Rodriguez', role: 'Tech Lead at Amazon', quote: 'Best investment I made in my career. The system design practice was exactly what I needed.' },
-  { name: 'David Kim', role: 'Staff Engineer at Apple', quote: 'The AI interviewer asks follow-up questions just like real interviewers. Highly recommended!' },
-  { name: 'Priya Sharma', role: 'Backend Engineer at Netflix', quote: 'Went from failing interviews to getting multiple offers. This platform is a game-changer.' },
-  { name: 'Alex Thompson', role: 'SDE II at Microsoft', quote: 'The analytics helped me track my progress and stay motivated throughout my prep.' },
+  { name: 'Shivam Dixit', role: 'Software Engineer at Google', quote: 'Interview IQ helped me land my dream job at Google. The AI mock interviews were incredibly realistic.' },
+  { name: 'Abhay Raj', role: 'Senior Developer at Meta', quote: 'The personalized feedback after each session helped me identify and fix my weak points quickly.' },
+  { name: 'Akshit Tomar', role: 'Tech Lead at Amazon', quote: 'Best investment I made in my career. The system design practice was exactly what I needed.' },
+  { name: 'Khyati Kapil', role: 'Staff Engineer at Apple', quote: 'The AI interviewer asks questions just like real interviewers. Highly recommended!' },
+  { name: 'Shreya Saxena', role: 'Backend Engineer at Netflix', quote: 'Went from failing interviews to getting multiple offers. This platform is a game-changer.' },
+  { name: 'Shradhha Jaiswal', role: 'SDE II at Microsoft', quote: 'The analytics helped me track my progress and stay motivated throughout my prep.' },
 ]
 
 export default function Testimonials() {

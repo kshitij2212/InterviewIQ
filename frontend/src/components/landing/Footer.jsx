@@ -1,40 +1,29 @@
-import { Brain } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
-const links = [
-  { title: 'Product', items: ['Features', 'Pricing', 'FAQ'] },
-  { title: 'Company', items: ['About', 'Blog', 'Careers'] },
-  { title: 'Legal', items: ['Privacy', 'Terms', 'Contact'] },
-]
-
-export default function Footer() {
+export default function DashboardFooter() {
   return (
-    <footer className="border-t border-border py-12">
-      <div className="mx-auto max-w-7xl px-6">
-        <div className="grid gap-8 md:grid-cols-4">
-          <div>
-            <div className="mb-4 flex items-center gap-2">
-              <Brain className="h-6 w-6 text-accent" />
-              <span className="font-bold">Interview IQ</span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              AI-powered interview preparation for software engineers.
-            </p>
+    <footer className="mt-20 border-t border-slate-100 bg-white">
+      <div className="mx-auto max-w-7xl px-6 py-10">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+          
+          <div className="flex-1">
+             <Link to="/" className="text-lg font-black tracking-tighter hover:opacity-80 transition-opacity uppercase text-slate-900 leading-none">
+                INTERVIEW<span className="text-accent">IQ</span>
+             </Link>
           </div>
-          {links.map(({ title, items }) => (
-            <div key={title}>
-              <h4 className="mb-4 font-semibold">{title}</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                {items.map(item => (
-                  <li key={item}>
-                    <a href="#" className="hover:text-foreground transition-colors">{item}</a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-        <div className="mt-12 border-t border-border pt-8 text-center text-sm text-muted-foreground">
-          © 2026 Interview IQ. All rights reserved.
+
+          <div className="flex-none text-center">
+             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+               © 2026 • THE FUTURE OF CAREER INTELLIGENCE
+             </p>
+          </div>
+
+          <div className="flex-1 flex justify-end items-center gap-8">
+             <Link to="/help" className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-accent transition-colors">Help</Link>
+             <Link to="/settings" className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-accent transition-colors">Privacy</Link>
+             <Link to="/settings" className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-accent transition-colors">Terms</Link>
+          </div>
+
         </div>
       </div>
     </footer>
