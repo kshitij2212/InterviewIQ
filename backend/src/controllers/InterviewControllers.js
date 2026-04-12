@@ -100,38 +100,24 @@ async function startInterview(req, res, next) {
         })
 
         const todayStr = getISTDateString()
-        const updatedUser = await User.findOneAndUpdate(
-            { 
-                _id: userId,
-                $or: [
-                    { planType: 'pro' },
-                    { dailyInterviewDate: { $ne: todayStr } },
-                    { dailyInterviewCount: { $lt: DAILY_INTERVIEW_LIMIT } }
-                ]
-            },
-            [
-                {
-                    $set: {
-                        dailyInterviewCount: {
-                            $cond: {
-                                if: { $eq: ['$dailyInterviewDate', todayStr] },
-                                then: { $add: ['$dailyInterviewCount', 1] },
-                                else: 1
-                            }
-                        },
-                        dailyInterviewDate: todayStr
-                    }
-                }
-            ],
-            { new: true }
-        )
-
-        if (!updatedUser) {
+        
+        // Update user counter
+        if (user.dailyInterviewDate !== todayStr) {
+            user.dailyInterviewDate = todayStr
+            user.dailyInterviewCount = 1
+        } else {
+            user.dailyInterviewCount += 1
+        }
+        
+        // Final sanity check (in case something changed between find and save)
+        if (user.planType !== 'pro' && user.dailyInterviewCount > DAILY_INTERVIEW_LIMIT) {
             return res.status(403).json({
                 success: false,
-                message: 'Daily interview limit reached or user error. Try again.'
+                message: 'Daily interview limit reached.'
             })
         }
+
+        await user.save()
 
         return res.status(201).json({
             success: true,
@@ -347,8 +333,9 @@ async function completeInterview(req, res, next) {
         }
 
         const validAnswers = answers.filter(a => a.status === 'submitted')
+        const totalQuestions = interview.questionIds.length
         const overallScore = validAnswers.length > 0
-            ? Math.round(validAnswers.reduce((sum, a) => sum + a.score, 0) / validAnswers.length)
+            ? Math.round(validAnswers.reduce((sum, a) => sum + a.score, 0) / totalQuestions)
             : 0
 
         let overallFeedback
