@@ -101,7 +101,6 @@ async function startInterview(req, res, next) {
 
         const todayStr = getISTDateString()
         
-        // Update user counter
         if (user.dailyInterviewDate !== todayStr) {
             user.dailyInterviewDate = todayStr
             user.dailyInterviewCount = 1
@@ -109,7 +108,6 @@ async function startInterview(req, res, next) {
             user.dailyInterviewCount += 1
         }
         
-        // Final sanity check (in case something changed between find and save)
         if (user.planType !== 'pro' && user.dailyInterviewCount > DAILY_INTERVIEW_LIMIT) {
             return res.status(403).json({
                 success: false,

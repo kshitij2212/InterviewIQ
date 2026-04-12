@@ -18,7 +18,6 @@ const storage = multer.diskStorage({
     destination: os.tmpdir(),
     filename: (req, file, cb) => {
         let ext = path.extname(file.originalname) || '.webm'
-        // Groq Whisper expects specific extensions. Map .opus to .ogg
         if (ext === '.opus') ext = '.ogg'
         cb(null, `audio_${Date.now()}${ext}`)
     }
