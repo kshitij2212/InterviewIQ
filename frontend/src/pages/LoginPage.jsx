@@ -37,7 +37,6 @@ export default function LoginPage() {
     }
   }
 
-  // Script load karo
   useEffect(() => {
     if (window.google) return
     const script = document.createElement('script')
@@ -47,7 +46,6 @@ export default function LoginPage() {
     document.head.appendChild(script)
   }, [])
 
-  // Button render karo — ref aur google dono ready hone ke baad
   useEffect(() => {
     if (initialized.current) return
 
@@ -108,8 +106,6 @@ export default function LoginPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-
-              {/* Email */}
               <div>
                 <label className="block text-sm font-medium text-gray-800 mb-1.5">Email address</label>
                 <div className="relative">
@@ -125,8 +121,6 @@ export default function LoginPage() {
                   />
                 </div>
               </div>
-
-              {/* Password */}
               <div>
                 <label className="text-sm font-medium text-gray-800 mb-1.5 block">Password</label>
                 <div className="relative">
@@ -150,29 +144,24 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Error */}
               {error && (
                 <div className="rounded-xl border border-red-200/60 bg-red-50/60 backdrop-blur-sm px-4 py-3 text-sm text-red-500">
                   {error}
                 </div>
               )}
 
-              {/* Submit */}
               <Button type="submit" className="w-full flex items-center justify-center gap-2">
                 {loading
                   ? <Loader2 className="h-4 w-4 animate-spin" />
                   : <><span>Sign in</span><ArrowRight className="h-4 w-4" /></>
                 }
               </Button>
-
-              {/* Divider */}
               <div className="flex items-center gap-3">
                 <div className="h-px flex-1 bg-gray-200/60" />
                 <span className="text-xs text-gray-400">or</span>
                 <div className="h-px flex-1 bg-gray-200/60" />
               </div>
 
-              {/* Google Button */}
               <div className="w-full rounded-xl overflow-hidden border border-accent/20 bg-white/60">
                 <div
                   ref={gsiButtonRef}

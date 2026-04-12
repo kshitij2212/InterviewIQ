@@ -7,7 +7,7 @@ import airbnb from '../../assets/airbnb.png'
 import spotify from '../../assets/spotify.png'
 import meta from '../../assets/meta.png'
 import apple from '../../assets/apple.png'
-import dashboardMockup from '../../assets/dashboard_mockup.png'
+import dashboardMockup from '../../assets/mac.png'
 
 const COMPANY_LOGOS = [
   {
