@@ -31,7 +31,7 @@ export const useAuthStore = create(
 
                     if (res.ok) {
                         const data = await res.json();
-                        set({ user: data.user, isAuthenticated: true });
+                        set({ user: data.data.user, isAuthenticated: true });
                     } else {
                         localStorage.removeItem('token');
                         set({ user: null, token: null, isAuthenticated: false });

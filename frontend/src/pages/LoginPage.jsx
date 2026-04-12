@@ -28,7 +28,7 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const { data } = await axiosInstance.post('/auth/login', form)
-      setAuth(data.user, data.token)
+      setAuth(data.data.user, data.token)
       navigate('/dashboard')
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid credentials. Please try again.')

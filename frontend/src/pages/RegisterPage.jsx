@@ -28,7 +28,7 @@ export default function RegisterPage() {
         email: form.email,
         password: form.password,
       })
-      setAuth(data.user, data.token)
+      setAuth(data.data.user, data.token)
       navigate('/dashboard')
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.')

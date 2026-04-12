@@ -126,8 +126,14 @@ export default function Header() {
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs uppercase tracking-tighter border border-indigo-200 shadow-sm">
-                     {user?.name ? user.name.split(' ').map(n=>n[0]).join('').slice(0,2) : 'U'}
+                  <div className="h-9 w-9 rounded-full overflow-hidden flex items-center justify-center font-bold text-xs uppercase tracking-tighter border border-border shadow-sm bg-indigo-50/50 group-hover:border-accent transition-colors">
+                     {user?.avatar ? (
+                       <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+                     ) : (
+                       <div className="h-full w-full bg-indigo-100 text-indigo-700 flex items-center justify-center">
+                          {user?.name ? user.name.split(' ').map(n=>n[0]).join('').slice(0,2) : 'U'}
+                       </div>
+                     )}
                   </div>
                   
                   <div className="relative group">

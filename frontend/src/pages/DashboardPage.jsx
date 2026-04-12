@@ -144,14 +144,25 @@ export default function DashboardPage() {
           </div>
         ) : (
           <>
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-              <div>
-                <h1 className="text-3xl font-black tracking-tighter text-slate-900 uppercase">
-                  {getGreeting()}, <span className="text-accent">{firstName}</span> 👋
-                </h1>
-                <p className="mt-1 text-muted-foreground font-medium text-sm">
-                  Welcome back to your career intelligence center.
-                </p>
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+              <div className="flex items-center gap-5">
+                <div className="h-16 w-16 rounded-[2rem] overflow-hidden border-2 border-accent/10 shadow-xl shadow-accent/5 shrink-0 bg-white flex items-center justify-center">
+                   {user?.avatar ? (
+                     <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+                   ) : (
+                     <div className="h-full w-full bg-indigo-50 text-indigo-700 flex items-center justify-center font-black text-xl uppercase tracking-tighter">
+                        {user?.name ? user.name.split(' ').map(n=>n[0]).join('').slice(0,2) : 'U'}
+                     </div>
+                   )}
+                </div>
+                <div>
+                  <h1 className="text-3xl font-black tracking-tighter text-slate-900 uppercase">
+                    {getGreeting()}, <span className="text-accent">{firstName}</span> 👋
+                  </h1>
+                  <p className="mt-1 text-muted-foreground font-medium text-sm">
+                    Welcome back to your career intelligence center.
+                  </p>
+                </div>
               </div>
               <div className="flex items-center gap-3">
                 <button 
