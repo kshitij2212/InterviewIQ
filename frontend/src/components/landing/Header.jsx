@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
 import { Button } from '../ui/Button'
+import { Link } from 'react-router-dom'
 
 const NAV_ITEMS = ['Features', 'How It Works', 'Testimonials', 'Pricing']
 
@@ -28,11 +29,11 @@ export default function Header() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
 
           {/* Logo — text only, no icon */}
-          <a href="/">
+          <Link to="/">
             <span className="text-xl font-extrabold tracking-tighter">
               INTERVIEW<span className="text-accent">IQ</span>
             </span>
-          </a>
+          </Link>
 
           {/* Desktop nav — plain links, original size */}
           <nav className="hidden items-center gap-8 md:flex">
@@ -54,19 +55,23 @@ export default function Header() {
 
           {/* Desktop CTA */}
           <div className="hidden items-center gap-4 md:flex">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              Sign In
-            </Button>
-            <Button
-              size="sm"
-              className="bg-accent text-accent-foreground hover:bg-accent/90"
-            >
-              Get Started
-            </Button>
+            <Link to="/login">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Sign In
+              </Button>
+            </Link>
+            <Link to="/register">
+              <Button
+                size="sm"
+                className="bg-accent text-accent-foreground hover:bg-accent/90"
+              >
+                Get Started
+              </Button>
+            </Link>
           </div>
 
           {/* Hamburger */}
@@ -117,15 +122,19 @@ export default function Header() {
             </nav>
 
             <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4">
-              <Button variant="outline" size="sm" className="w-full justify-center">
-                Sign In
-              </Button>
-              <Button
-                size="sm"
-                className="w-full justify-center bg-accent text-accent-foreground hover:bg-accent/90"
-              >
-                Get Started
-              </Button>
+              <Link to="/login" onClick={() => setOpen(false)}>
+                <Button variant="outline" size="sm" className="w-full justify-center">
+                  Sign In
+                </Button>
+              </Link>
+              <Link to="/register" onClick={() => setOpen(false)}>
+                <Button
+                  size="sm"
+                  className="w-full justify-center bg-accent text-accent-foreground hover:bg-accent/90"
+                >
+                  Get Started
+                </Button>
+              </Link>
             </div>
           </motion.div>
         )}
