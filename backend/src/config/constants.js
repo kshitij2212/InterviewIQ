@@ -1,8 +1,8 @@
 const ROLE_SPECIALIZATION_MAP = {
     frontend:     ['react', 'vue', 'angular', 'svelte', 'nextjs'],
-    backend:      ['node', 'express', 'django', 'spring', 'rails', 'fastapi', 'nestjs'],
+    backend:      ['node', 'express', 'django', 'spring', 'fastapi', 'nestjs'],
     fullstack:    ['react', 'vue', 'angular', 'node', 'django', 'nextjs'],
-    devops:       ['aws', 'gcp', 'azure', 'kubernetes', 'docker', 'terraform', 'jenkins'],
+    devops:       ['aws', 'gcp', 'azure', 'kubernetes', 'docker', 'terraform'],
     mobile:       ['ios', 'android', 'flutter', 'react_native', 'kotlin', 'swift'],
     ai_ml:        ['tensorflow', 'pytorch', 'scikit_learn', 'nlp', 'computer_vision'],
     data_science: ['python', 'spark', 'hadoop', 'sql', 'tableau', 'power_bi'],

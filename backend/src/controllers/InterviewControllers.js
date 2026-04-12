@@ -4,7 +4,7 @@ const Question = require('../models/Question')
 const User = require('../models/User')
 const { generateQuestions } = require('../services/questionGenerator')
 const { evaluateAnswer } = require('../services/answerEvaluator')
-const { INTERVIEW_QUESTION_LIMITS, ROLE_SPECIALIZATION_MAP, DAILY_INTERVIEW_LIMIT } = require('../config/constants')
+const { INTERVIEW_QUESTION_LIMITS, ROLE_SPECIALIZATION_MAP, DAILY_INTERVIEW_LIMIT, LEVELS, INTERVIEW_TYPES } = require('../config/constants')
 
 function getISTDateString() {
     return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
@@ -13,7 +13,18 @@ function getISTDateString() {
 async function startInterview(req, res, next) {
     try {
         const userId = req.user._id
-        let { role, specialization, level, type, questionCount = 5 } = req.body
+        let { 
+            role, 
+            specialization, 
+            level, 
+            type, 
+            interviewType, 
+            questionCount, 
+            totalQuestions = 5 
+        } = req.body
+
+        type = type || interviewType
+        questionCount = questionCount || totalQuestions || 5
 
         role = role?.trim().toLowerCase()
         specialization = specialization?.trim().toLowerCase()
@@ -441,11 +452,70 @@ async function getHistory(req, res, next) {
     }
 }
 
+async function getInterviewSession(req, res, next) {
+    try {
+        const userId = req.user._id
+        const { id } = req.params
+
+        const interview = await Interview.findById(id).lean()
+        if (!interview) {
+            return res.status(404).json({ success: false, message: 'Interview not found' })
+        }
+
+        if (interview.userId.toString() !== userId.toString()) {
+            return res.status(403).json({ success: false, message: 'Unauthorized' })
+        }
+
+        const answers = await Answer.find({ interviewId: id })
+            .populate('questionId', 'text expectedKeywords bestResponse')
+            .sort({ answerOrder: 1 })
+            .lean()
+        
+        let currentQuestion = null
+        if (interview.status === 'in_progress' && interview.currentQuestionIndex < interview.questionIds.length) {
+            currentQuestion = await Question.findById(interview.questionIds[interview.currentQuestionIndex]).lean()
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                interview,
+                answers,
+                currentQuestion: currentQuestion ? {
+                    index: interview.currentQuestionIndex,
+                    total: interview.questionIds.length,
+                    question: currentQuestion
+                } : null
+            }
+        })
+    } catch (err) {
+        next(err)
+    }
+}
+
+async function getSetupConfig(req, res, next) {
+    try {
+        return res.status(200).json({
+            success: true,
+            data: {
+                roles: ROLE_SPECIALIZATION_MAP,
+                levels: LEVELS,
+                interviewTypes: INTERVIEW_TYPES,
+                questionOptions: INTERVIEW_QUESTION_LIMITS.options
+            }
+        })
+    } catch (err) {
+        next(err)
+    }
+}
+
 module.exports = {
     startInterview,
     getCurrentQuestion,
     submitAnswer,
     completeInterview,
     abandonInterview,
-    getHistory
+    getHistory,
+    getSetupConfig,
+    getInterviewSession
 }

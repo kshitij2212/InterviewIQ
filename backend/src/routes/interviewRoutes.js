@@ -6,7 +6,9 @@ const {
     submitAnswer,
     completeInterview,
     abandonInterview,
-    getHistory
+    getHistory,
+    getSetupConfig,
+    getInterviewSession
 } = require('../controllers/InterviewControllers')
 const authMiddleware = require('../middleware/authMiddleware')
 const { apiLimiter } = require('../middleware/rateLimiter')
@@ -14,8 +16,11 @@ const { apiLimiter } = require('../middleware/rateLimiter')
 router.use(authMiddleware)
 router.use(apiLimiter)
 
+router.get('/setup', getSetupConfig)
 router.get('/history', getHistory)
 router.post('/start', startInterview)
+
+router.get('/:id', getInterviewSession)
 
 router.get('/:id/question', getCurrentQuestion)
 router.post('/:id/answer', submitAnswer)
