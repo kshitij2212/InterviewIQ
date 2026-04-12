@@ -1,5 +1,6 @@
 const express = require('express')
 const dotenv = require('dotenv')
+dotenv.config()
 const cors = require('cors')
 
 const notFound = require('./middleware/notFound')
@@ -9,7 +10,7 @@ const authRoutes = require('./routes/authRoutes')
 const questionRoutes = require('./routes/questionRoutes')
 const interviewRoutes = require('./routes/interviewRoutes')
 
-dotenv.config()
+
 const app = express()
 
 app.use(cors())
