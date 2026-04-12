@@ -15,6 +15,7 @@ const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 5, 
     skipSuccessfulRequests: true, 
+    validate: { default: false },
     keyGenerator: (req) => {
         const email = req.body.email ? String(req.body.email).toLowerCase().trim() : 'anonymous'
         return `${req.ip}_${email}`
