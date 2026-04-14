@@ -8,7 +8,7 @@ const SPEEDS = [
   { label: 'Fast', rate: 1.1 },
 ]
 
-export default function QuestionCard({ currentQuestion, onQuestionSpeak, ttsEnabled }) {
+export default function QuestionCard({ currentQuestion, onQuestionSpeak, ttsEnabled, isSpeaking, onStopSpeaking }) {
   const text = currentQuestion?.question?.text
   const [rate, setRate] = useState(0.85)
 
@@ -42,11 +42,12 @@ export default function QuestionCard({ currentQuestion, onQuestionSpeak, ttsEnab
             <button
               key={s.label}
               onClick={() => setRate(s.rate)}
+              disabled={isSpeaking}
               className={`text-[10px] font-bold px-2 py-1 rounded-md transition-all ${
                 rate === s.rate
                   ? 'bg-accent text-accent-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
+                  : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+              } disabled:opacity-40 disabled:cursor-not-allowed`}
             >
               {s.label}
             </button>
@@ -55,7 +56,10 @@ export default function QuestionCard({ currentQuestion, onQuestionSpeak, ttsEnab
 
         <div className="flex gap-2">
           <button
-            onClick={() => window.speechSynthesis.cancel()}
+            onClick={() => {
+              window.speechSynthesis.cancel()
+              onStopSpeaking?.()
+            }}
             className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground hover:text-red-500 bg-secondary/50 px-2.5 py-1.5 rounded-lg border border-border/50 hover:border-red-500/30 transition-all uppercase tracking-wide"
             title="Stop reading aloud"
           >
@@ -64,7 +68,8 @@ export default function QuestionCard({ currentQuestion, onQuestionSpeak, ttsEnab
           </button>
           <button
             onClick={handleRecite}
-            className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground hover:text-accent bg-secondary/50 px-2.5 py-1.5 rounded-lg border border-border/50 hover:border-accent/30 transition-all uppercase tracking-wide"
+            disabled={isSpeaking}
+            className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground hover:text-accent bg-secondary/50 px-2.5 py-1.5 rounded-lg border border-border/50 hover:border-accent/30 transition-all uppercase tracking-wide disabled:opacity-40 disabled:cursor-not-allowed"
             title="Read question aloud"
           >
             <Volume2 size={13} />

@@ -51,7 +51,7 @@ export default function ScoreCard({
              { label: 'Confidence Index', val: avgConfidence, color: 'text-amber-500', bg: 'bg-amber-50', icon: TrendingUp },
            ].map(stat => {
              const Icon = stat.icon
-             const verdict = stat.val >= 90 ? 'Expert' : stat.val >= 70 ? 'Proficient' : stat.val >= 50 ? 'Developing' : 'Initial'
+             const verdict = stat.val >= 95 ? 'Master' : stat.val >= 90 ? 'Expert' : stat.val >= 80 ? 'Advanced' : stat.val >= 70 ? 'Proficient' : stat.val >= 60 ? 'Intermediate' : stat.val >= 50 ? 'Developing' : stat.val >= 30 ? 'Beginner' : 'Initial';
              
              return (
                 <div key={stat.label} className="p-5 rounded-2xl border border-slate-100 bg-slate-50/30 hover:bg-white hover:shadow-xl hover:shadow-slate-200/40 transition-all group overflow-hidden relative">

@@ -1,13 +1,13 @@
-import { Brain, Code2, MessageSquare, Target, Zap, Users } from 'lucide-react'
+import { Brain, Globe, MessageSquare, Target, Zap, Volume2 } from 'lucide-react'
 import { Card } from '../ui/Card'
 
 const features = [
-  { icon: Brain, title: 'AI Mock Interviews', description: 'Practice with our AI interviewer that adapts to your skill level and provides realistic interview scenarios.' },
-  { icon: Code2, title: 'Live Coding Environment', description: 'Write and run code in real-time with syntax highlighting, auto-completion, and instant feedback.' },
-  { icon: MessageSquare, title: 'Instant Feedback', description: 'Get detailed feedback on your answers, coding style, and communication skills after each session.' },
-  { icon: Target, title: 'Personalized Learning', description: 'AI-generated study plans based on your target companies and identified weak areas.' },
-  { icon: Zap, title: 'Performance Analytics', description: 'Track your progress with detailed analytics and identify areas for improvement.' },
-  { icon: Users, title: 'Expert Community', description: 'Connect with engineers from top companies for mentorship and advice.' },
+  { icon: Brain, title: 'AI-Powered Interviews', description: 'Experience realistic mock interviews driven by AI, designed to test your knowledge exactly like a human recruiter would.' },
+  { icon: Globe, title: 'Multilingual Support', description: 'Answer in your preferred language. Our intelligent system seamlessly translates your responses into English for accurate evaluation.' },
+  { icon: MessageSquare, title: 'Instant Feedback', description: 'Receive immediate, actionable feedback on your answers compared against the ideal responses after every question.' },
+  { icon: Target, title: 'Category Specific', description: 'Target your weak points by selecting specific interview categories, from specialized technical domains to behavioral questions.' },
+  { icon: Zap, title: 'Session Analytics', description: 'Track your daily sessions and overall progress. Optimize your preparation with your history and detailed insights.' },
+  { icon: Volume2, title: 'Interactive Voice', description: 'Engage in a natural conversation with integrated Text-to-Speech capabilities that reads out the interview questions to you.' },
 ]
 
 export default function Features() {
