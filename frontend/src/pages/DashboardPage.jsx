@@ -19,7 +19,7 @@ function getGreeting() {
   if (hour >= 4 && hour < 12) return 'Good morning'
   if (hour >= 12 && hour < 17) return 'Good afternoon'
   if (hour >= 17 && hour < 21) return 'Good evening'
-  return 'Burning the midnight oil'
+  return 'Working late'
 }
 
 function calculateStreak(interviews) {

@@ -27,6 +27,7 @@ export default function InterviewPage() {
   const [interviewData, setInterviewData] = useState(null)
   const [sessionStarted, setSessionStarted] = useState(false)
   const [ttsEnabled, setTtsEnabled] = useState(true)
+  const [isSpeaking, setIsSpeaking] = useState(false)
 
   const [status, setStatus] = useState('idle')
   const [transcript, setTranscript] = useState('')
@@ -40,29 +41,46 @@ export default function InterviewPage() {
   const speak = (text, rate = 0.85) => {
     if (!text || !window.speechSynthesis) return
     window.speechSynthesis.cancel()
+    setIsSpeaking(false)
     
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.rate = rate
-    
-    // Find the best available voice
-    const voices = window.speechSynthesis.getVoices()
-    
-    // Preferred voices in order of quality/naturalness
-    // 1. "Google US English" in Chrome (sometimes has a high quality version)
-    // 2. "Natural" voices (some browsers prefix with this)
-    // 3. "Samantha" (Standard high quality Mac voice)
-    // 4. Any English US voice
-    const preferredVoice = voices.find(v => v.name.includes('Natural') && v.lang.startsWith('en')) ||
-                          voices.find(v => v.name === 'Google US English' && v.lang === 'en-US') ||
-                          voices.find(v => v.name.includes('Samantha') && v.lang.startsWith('en')) ||
-                          voices.find(v => v.lang.startsWith('en-US')) ||
-                          voices[0]
 
-    if (preferredVoice) {
-      utterance.voice = preferredVoice
-    }
+    utterance.onstart = () => setIsSpeaking(true)
+    utterance.onend = () => setIsSpeaking(false)
+    utterance.onerror = () => setIsSpeaking(false)
     
-    window.speechSynthesis.speak(utterance)
+    const attemptSpeak = () => {
+      const voices = window.speechSynthesis.getVoices()
+      if (voices.length === 0) return false
+
+      // On Mac/Chrome, "Google US English" is the robotic one. 
+      // "Samantha" or any voice NOT containing "Google" is usually the better system voice.
+      const preferredVoice = 
+        voices.find(v => v.name.includes('Samantha') && v.lang.startsWith('en')) ||
+        voices.find(v => v.name.includes('Siri') && v.lang.startsWith('en')) ||
+        voices.find(v => v.name.includes('Alex') && v.lang.startsWith('en')) ||
+        voices.find(v => v.name.includes('Natural') && v.lang.startsWith('en')) ||
+        // If we must use Google, try to avoid the base US one if others exist
+        voices.find(v => v.lang.startsWith('en-US') && !v.name.includes('Google')) ||
+        voices.find(v => v.lang.startsWith('en-US')) ||
+        voices[0]
+
+      if (preferredVoice) {
+        utterance.voice = preferredVoice
+      }
+      
+      window.speechSynthesis.speak(utterance)
+      return true
+    }
+
+    if (!attemptSpeak()) {
+      // If voices aren't loaded yet, wait for them
+      window.speechSynthesis.onvoiceschanged = () => {
+        attemptSpeak()
+        window.speechSynthesis.onvoiceschanged = null // Only once
+      }
+    }
   }
 
 
@@ -337,7 +355,13 @@ export default function InterviewPage() {
         
         <div className="flex flex-col gap-8">
           
-          <QuestionCard currentQuestion={currentQuestion} onQuestionSpeak={speak} ttsEnabled={ttsEnabled} />
+          <QuestionCard 
+            currentQuestion={currentQuestion} 
+            onQuestionSpeak={speak} 
+            ttsEnabled={ttsEnabled} 
+            isSpeaking={isSpeaking} 
+            onStopSpeaking={() => setIsSpeaking(false)}
+          />
 
           <AnswerRecorder 
             status={status} 

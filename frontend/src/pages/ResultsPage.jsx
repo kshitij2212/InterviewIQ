@@ -227,7 +227,7 @@ export default function ResultsPage() {
                     </div>
 
                     <div className="prose prose-slate max-w-none">
-                       <p className="text-lg text-slate-600 font-medium leading-relaxed italic mb-10 text-pretty">
+                       <p className="text-sm text-slate-600 font-semibold leading-relaxed italic mb-8 text-pretty">
                          "{interview.overallFeedback?.suggestion || "Based on your session metrics, you demonstrate a solid foundation. Focus on structural clarity and technical depth in your upcoming practice cycles."}"
                        </p>
                     </div>

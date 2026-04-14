@@ -50,11 +50,9 @@ export default function ProfilePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-8">
           
-          {/* Main Info Card */}
           <div className="bg-white rounded-3xl border border-slate-200/60 p-8 lg:p-10 shadow-xl shadow-slate-200/20">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8 mb-12 pb-10 border-b border-slate-100">
               
-              {/* Avatar Section */}
               <div className="relative group">
                 <div className="h-28 w-28 rounded-3xl overflow-hidden border-4 border-accent/10 shadow-2xl shadow-accent/10 shrink-0 bg-white">
                   {user?.avatar ? (
@@ -65,14 +63,12 @@ export default function ProfilePage() {
                     </div>
                   )}
                 </div>
-                {/* Decorative Elements */}
                 <div className="absolute -inset-2 rounded-[2rem] border border-accent/20 -z-10 transition-transform duration-500 blur-sm group-hover:scale-105 opacity-0 group-hover:opacity-100"></div>
                 <div className="absolute -bottom-2 -right-2 h-8 w-8 rounded-xl bg-emerald-500 border-4 border-white flex items-center justify-center shadow-lg" title="Active Status">
                   <Check size={12} className="text-white font-black" />
                 </div>
               </div>
 
-              {/* Name Edit Section */}
               <div className="flex-1 text-center sm:text-left mt-2">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-accent mb-2">Display Name</p>
                 <AnimatePresence mode="wait">
@@ -124,7 +120,6 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Details List */}
             <div className="space-y-4">
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Account Details</h3>
               
@@ -167,7 +162,6 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Quick Stats Sidebar */}
           <div className="flex flex-col gap-6">
             <div className="bg-gradient-to-br from-indigo-600 to-indigo-900 rounded-3xl p-8 text-white shadow-xl shadow-indigo-900/20 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-6 opacity-10">
