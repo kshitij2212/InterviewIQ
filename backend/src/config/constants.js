@@ -1,13 +1,13 @@
 const ROLE_SPECIALIZATION_MAP = {
     frontend:              ['react', 'vue', 'angular', 'svelte', 'nextjs'],
     backend:               ['node', 'express', 'django', 'spring', 'fastapi', 'nestjs'],
-    coding_languages: ['javascript', 'python', 'java', 'C++', 'ruby', 'go'],
+    coding_languages:      ['javascript', 'python', 'java', 'C++', 'ruby', 'go'],
+    data_science:          ['python', 'spark', 'mongodb', 'sql', 'tableau', 'power_bi'],
+    HR:                    null,
+    introduction:          null,
     devops:                ['aws', 'gcp', 'azure', 'kubernetes', 'docker', 'terraform'],
     mobile:                ['ios', 'android', 'flutter', 'react_native', 'kotlin', 'swift'],
     AI_ML:                 ['tensorflow', 'pytorch', 'scikit_learn', 'nlp', 'computer_vision'],
-    data_science:          ['python', 'spark', 'mongodb', 'sql', 'tableau', 'power_bi'],
-    HR:                    null,
-    introduction:          null
 }
 
 const VALID_ROLES = Object.keys(ROLE_SPECIALIZATION_MAP)
@@ -34,7 +34,7 @@ const DAILY_INTERVIEW_LIMIT = 3
 const INTERVIEW_QUESTION_LIMITS = {
     min: 3,
     max: 10,
-    options: [3, 5, 8]
+    options: [3, 5, 10]
 }
 
 const SCORE_RANGE = {
