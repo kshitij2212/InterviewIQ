@@ -378,7 +378,7 @@ export default function InterviewPage() {
                    <div key={qId} className="flex gap-4 relative z-10">
                       <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 border-2 transition-all ${
                         stepStatus === 'done' ? 'bg-emerald-500 border-emerald-500 text-white' :
-                        stepStatus === 'curr' ? 'bg-accent border-accent text-white shadow-lg shadow-accent/20 border-accent' :
+                        stepStatus === 'curr' ? 'bg-accent border-accent text-white shadow-lg shadow-accent/20' :
                         'bg-background border-border text-muted-foreground'
                       }`}>
                          {stepStatus === 'done' ? <CheckCircle2 className="w-3.5 h-3.5" /> : <span className="text-[10px] font-black">{i + 1}</span>}
