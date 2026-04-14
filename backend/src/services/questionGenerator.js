@@ -1,6 +1,6 @@
 const groq = require('./groq')
 const Question = require('../models/Question')
-const { INTERVIEW_QUESTION_LIMITS } = require('../config/constants')
+const { INTERVIEW_QUESTION_LIMITS, LEVEL_DIFFICULTY_HINTS } = require('../config/constants')
 
 function normalizeText(text) {
     return text.trim().toLowerCase().replace(/\s+/g, ' ')
@@ -12,12 +12,14 @@ async function generateQuestions({ role, specialization, level, questionType, co
         INTERVIEW_QUESTION_LIMITS.max
     )
 
+    const levelHint = LEVEL_DIFFICULTY_HINTS[level] || ''
     const isHR = questionType === 'hr' || role === 'introduction'
     const systemPrompt = isHR 
         ? 'You are an expert HR and behavioral interviewer. You only output valid JSON. You must return a JSON object with a "questions" key.'
         : 'You are a technical interviewer. You only output valid JSON. You must return a JSON object with a "questions" key.'
 
     let prompt = `Generate exactly ${safeCount} interview questions for a ${level} ${role} role${specialization ? ` specializing in ${specialization}` : ''}.
+Difficulty Focus: ${levelHint}
 The questions must be of type: ${questionType}.
 
 Return a JSON object with a "questions" key containing the array. Each question MUST include:

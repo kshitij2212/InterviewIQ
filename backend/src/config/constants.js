@@ -13,6 +13,11 @@ const ROLE_SPECIALIZATION_MAP = {
 const VALID_ROLES = Object.keys(ROLE_SPECIALIZATION_MAP)
 
 const LEVELS = ['fresher', 'junior', 'senior']
+const LEVEL_DIFFICULTY_HINTS = {
+    fresher: 'Focus on fundamentals, core syntax, basic theory, and introductory concepts. Questions should be approachable for someone with 0-1 years of experience.',
+    junior:  'Focus on practical application, problem solving, library/framework proficiency, and common use cases. Questions should reflect 1-3 years of real-world experience.',
+    senior:  'Focus on architecture, system design, scalability, trade-offs, performance optimization, and deep technical mastery. Questions should challenge someone with 3+ years of experience.'
+}
 
 const QUESTION_TYPES = ['technical', 'hr', 'dsa', 'system_design']
 
@@ -24,7 +29,7 @@ const ANSWER_STATUS = ['submitted', 'skipped', 'timeout']
 
 const PLAN_TYPES = ['free', 'pro']
 
-const DAILY_INTERVIEW_LIMIT = 6
+const DAILY_INTERVIEW_LIMIT = 3
 
 const INTERVIEW_QUESTION_LIMITS = {
     min: 3,
@@ -41,6 +46,7 @@ module.exports = {
     ROLE_SPECIALIZATION_MAP,
     VALID_ROLES,
     LEVELS,
+    LEVEL_DIFFICULTY_HINTS,
     QUESTION_TYPES,
     INTERVIEW_TYPES,
     INTERVIEW_STATUS,

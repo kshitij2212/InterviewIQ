@@ -1,5 +1,5 @@
 const groq = require('./groq')
-const { SCORE_RANGE } = require('../config/constants')
+const { SCORE_RANGE, LEVEL_DIFFICULTY_HINTS } = require('../config/constants')
 
 function getKeywordScore(transcript, expectedKeywords) {
     if (!transcript || typeof transcript !== 'string') return 0
@@ -9,10 +9,12 @@ function getKeywordScore(transcript, expectedKeywords) {
     return (matched.length / expectedKeywords.length) * SCORE_RANGE.max
 }
 
-async function evaluateWithLLM({ questionText, transcript, expectedKeywords }) {
+async function evaluateWithLLM({ questionText, transcript, expectedKeywords, level = 'fresher' }) {
     const safeKeywords = Array.isArray(expectedKeywords) ? expectedKeywords : []
+    const levelHint = LEVEL_DIFFICULTY_HINTS[level] || ''
 
     const prompt = `Evaluate this interview answer strictly.
+Candidate Level: ${level} (${levelHint})
 Question: ${questionText}
 Answer: ${transcript}
 Expected Keywords: ${safeKeywords.join(', ')}
@@ -73,7 +75,7 @@ Return ONLY valid JSON in this exact shape:
     return parsed
 }
 
-async function evaluateAnswer({ questionText, transcript, expectedKeywords, status }) {
+async function evaluateAnswer({ questionText, transcript, expectedKeywords, status, level }) {
     if (status === 'skipped' || status === 'timeout') {
         return {
             score: 0,
@@ -96,7 +98,12 @@ async function evaluateAnswer({ questionText, transcript, expectedKeywords, stat
 
     const safeKeywords = Array.isArray(expectedKeywords) ? expectedKeywords : []
     const keywordScore = getKeywordScore(transcript, safeKeywords)
-    const llmResult = await evaluateWithLLM({ questionText, transcript, expectedKeywords: safeKeywords })
+    const llmResult = await evaluateWithLLM({ 
+        questionText, 
+        transcript, 
+        expectedKeywords: safeKeywords,
+        level: level || 'fresher'
+    })
 
     const finalScore = safeKeywords.length > 0
         ? Math.min(Math.round(0.6 * llmResult.score + 0.4 * keywordScore), SCORE_RANGE.max)
@@ -107,10 +114,62 @@ async function evaluateAnswer({ questionText, transcript, expectedKeywords, stat
         feedback: llmResult.feedback,
         breakdown: {
             content:       typeof llmResult.breakdown?.content === 'number' ? llmResult.breakdown.content : 0,
-            keywords:      Number(keywordScore.toFixed(1)),
+            keywords:      Math.round(keywordScore * 10) / 10,
             communication: typeof llmResult.breakdown?.communication === 'number' ? llmResult.breakdown.communication : 0
         }
     }
 }
 
-module.exports = { evaluateAnswer }
+async function generateOverallFeedback({ role, level, type, answers }) {
+    if (!answers || answers.length === 0) return null
+
+    const sessionSummary = answers.map((a, i) => `
+Q${i + 1}: ${a.questionId?.text || 'Question'}
+Score: ${a.score}/10
+Answer: ${a.transcript || 'Skipped'}
+Strengths: ${a.feedback?.strengths?.join(', ')}
+Improvements: ${a.feedback?.improvements?.join(', ')}
+`).join('\n---\n')
+
+    const prompt = `You are an elite career coach and expert technical interviewer. 
+Analyze this full interview session for a ${level} ${role} (${type} interview). 
+
+SESSION DATA:
+${sessionSummary}
+
+TASK:
+Provide a comprehensive, high-impact "Executive Summary" of their performance. 
+Be constructive but firm. Address:
+1. Their technical/professional persona.
+2. Recurring patterns in their strengths and weaknesses.
+3. A "Deep Dive" actionable strategy for their next 30 days of preparation.
+
+LENGTH:
+Write between 150-250 words. Be eloquent and professional.
+
+Return ONLY a JSON object:
+{
+  "summary": "Full detailed report text here",
+  "topStrengths": ["string"],
+  "topImprovements": ["string"]
+}`
+
+    try {
+        const res = await groq.chat.completions.create({
+            model: 'llama-3.3-70b-versatile',
+            messages: [
+                { role: 'system', content: 'You are an executive career coach. You only output valid JSON.' },
+                { role: 'user', content: prompt }
+            ],
+            response_format: { type: 'json_object' },
+            temperature: 0.5
+        })
+        const raw = res.choices[0]?.message?.content
+        return JSON.parse(raw)
+    } catch (err) {
+        console.error('Overall feedback generation failed:', err)
+        return null
+    }
+}
+
+module.exports = { evaluateAnswer, generateOverallFeedback }

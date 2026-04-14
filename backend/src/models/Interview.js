@@ -71,12 +71,6 @@ const interviewSchema = new mongoose.Schema(
             ]
         },
 
-        answerIds: {
-            type: [mongoose.Schema.Types.ObjectId],
-            ref: 'Answer',
-            default: []
-        },
-
         currentQuestionIndex: {
             type: Number,
             default: 0,

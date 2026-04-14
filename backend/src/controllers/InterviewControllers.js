@@ -3,7 +3,7 @@ const Answer = require('../models/Answer')
 const Question = require('../models/Question')
 const User = require('../models/User')
 const { generateQuestions } = require('../services/questionGenerator')
-const { evaluateAnswer } = require('../services/answerEvaluator')
+const { evaluateAnswer, generateOverallFeedback } = require('../services/answerEvaluator')
 const { INTERVIEW_QUESTION_LIMITS, ROLE_SPECIALIZATION_MAP, DAILY_INTERVIEW_LIMIT, LEVELS, INTERVIEW_TYPES } = require('../config/constants')
 
 function getISTDateString() {
@@ -19,12 +19,11 @@ async function startInterview(req, res, next) {
             level, 
             type, 
             interviewType, 
-            questionCount, 
             totalQuestions = 5 
         } = req.body
 
-        type = type || interviewType
-        questionCount = questionCount || totalQuestions || 5
+        type = (type || interviewType || 'technical').toLowerCase()
+        const questionCount = Number(totalQuestions) || 5
 
         role = role?.trim().toLowerCase()
         specialization = specialization?.trim().toLowerCase()
@@ -40,20 +39,6 @@ async function startInterview(req, res, next) {
             return res.status(400).json({
                 success: false,
                 message: `questionCount must be one of: ${INTERVIEW_QUESTION_LIMITS.options.join(', ')}`
-            })
-        }
-
-        const allowedSpecs = ROLE_SPECIALIZATION_MAP[role]
-        if (allowedSpecs !== null && !specialization) {
-            return res.status(400).json({
-                success: false,
-                message: `Specialization required for role "${role}". Allowed: ${allowedSpecs.join(', ')}`
-            })
-        }
-        if (allowedSpecs !== null && specialization && !allowedSpecs.includes(specialization)) {
-            return res.status(400).json({
-                success: false,
-                message: `Invalid specialization "${specialization}" for role "${role}"`
             })
         }
 
@@ -246,7 +231,8 @@ async function submitAnswer(req, res, next) {
                     questionText: currentQuestion.text,
                     transcript: transcript || null,
                     expectedKeywords: currentQuestion.expectedKeywords,
-                    status
+                    status,
+                    level: interview.level
                 })
             } catch {
                 evaluation = {
@@ -332,17 +318,18 @@ async function completeInterview(req, res, next) {
             })
         }
 
-        const answers = await Answer.find({ interviewId: id })
+        const answersWithQuestions = await Answer.find({ interviewId: id }).populate('questionId').lean()
 
-        if (answers.length === 0) {
+        if (answersWithQuestions.length === 0) {
             return res.status(400).json({
                 success: false,
                 message: 'Cannot complete interview with no answers'
             })
         }
 
-        const validAnswers = answers.filter(a => a.status === 'submitted')
+        const validAnswers = answersWithQuestions.filter(a => a.status === 'submitted')
         const totalQuestions = interview.questionIds.length
+        
         const overallScore = validAnswers.length > 0
             ? Math.round(validAnswers.reduce((sum, a) => sum + a.score, 0) / totalQuestions)
             : 0
@@ -355,12 +342,27 @@ async function completeInterview(req, res, next) {
                 suggestion: 'Try attempting questions seriously for useful feedback'
             }
         } else {
-            const strengths    = [...new Set(answers.flatMap(a => a.feedback?.strengths    ?? []))]
-            const improvements = [...new Set(answers.flatMap(a => a.feedback?.improvements ?? []))]
-            overallFeedback = {
-                strengths:    strengths.slice(0, 5),
-                improvements: improvements.slice(0, 5),
-                suggestion:   null
+            const aiFeedback = await generateOverallFeedback({
+                role: interview.role,
+                level: interview.level,
+                type: interview.type,
+                answers: answersWithQuestions
+            })
+
+            if (aiFeedback) {
+                overallFeedback = {
+                    strengths: aiFeedback.topStrengths || [],
+                    improvements: aiFeedback.topImprovements || [],
+                    suggestion: aiFeedback.summary
+                }
+            } else {
+                const strengths    = [...new Set(answersWithQuestions.flatMap(a => a.feedback?.strengths    ?? []))]
+                const improvements = [...new Set(answersWithQuestions.flatMap(a => a.feedback?.improvements ?? []))]
+                overallFeedback = {
+                    strengths:    strengths.slice(0, 5),
+                    improvements: improvements.slice(0, 5),
+                    suggestion:   'Focus on maintaining consistency across all core domains.'
+                }
             }
         }
 
@@ -375,7 +377,7 @@ async function completeInterview(req, res, next) {
                 interviewId: interview.id,
                 overallScore,
                 overallFeedback: interview.overallFeedback,
-                totalAnswers: answers.length
+                totalAnswers: answersWithQuestions.length
             }
         })
     } catch (err) {
@@ -431,7 +433,7 @@ async function getHistory(req, res, next) {
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(Number(limit))
-                .select('-questionIds -answerIds')
+                .select('-questionIds')
                 .lean(),
             Interview.countDocuments(filter)
         ])
