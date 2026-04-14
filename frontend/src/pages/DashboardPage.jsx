@@ -11,6 +11,7 @@ import {
 import { interviewApi } from '../api/interview'
 import Header from '../components/landing/Header'
 import Footer from '../components/landing/Footer'
+import InterviewCard from '../components/interview/InterviewCard'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const DAILY_GOAL = 5
@@ -23,21 +24,21 @@ function getGreeting() {
   return 'Burning the midnight oil'
 }
 
-function scoreStyle(score) {
-  if (score >= 9) return 'bg-emerald-50 text-emerald-600'
-  if (score >= 8) return 'bg-indigo-50 text-indigo-600'
-  if (score >= 5) return 'bg-violet-50 text-violet-600'
-  return 'bg-slate-50 text-slate-500'
-}
+
 
 export default function DashboardPage() {
-  const user = useAuthStore(s => s.user)
+  const { user, isAuthenticated } = useAuthStore()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [interviews, setInterviews] = useState([])
   const [showGoalPopup, setShowGoalPopup] = useState(false)
   
   useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login')
+      return
+    }
+
     async function loadHistory() {
       try {
         setLoading(true)
@@ -58,7 +59,7 @@ export default function DashboardPage() {
       }
     }
     loadHistory()
-  }, [])
+  }, [isAuthenticated, navigate])
 
   const firstName = user?.name?.split(' ')[0] ?? 'there'
   const hasHistory = interviews.length > 0
@@ -202,45 +203,13 @@ export default function DashboardPage() {
                           <th className="px-8 py-5">Expertise Level</th>
                           <th className="px-8 py-5 text-center">Proficiency</th>
                           <th className="px-8 py-5">Date & Time</th>
+                          <th className="px-8 py-5 text-center">Duration Lasted</th>
                           <th className="px-8 py-5 text-right">Action</th>
                         </tr>
                      </thead>
                      <tbody className="divide-y divide-slate-100">
                         {interviews.map((session) => (
-                           <tr key={session._id} className="group hover:bg-slate-50/50 transition-colors">
-                              <td className="px-8 py-6">
-                                 <div className="font-black text-sm text-slate-900 uppercase tracking-tight">{session.role}</div>
-                              </td>
-                              <td className="px-8 py-6">
-                                 <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest bg-slate-100/50 px-2.5 py-1 rounded inline-block border border-slate-200/50">
-                                    {session.level}
-                                 </div>
-                              </td>
-                              <td className="px-8 py-6 text-center">
-                                 <div className={`inline-flex items-center px-4 py-2 rounded-xl font-black text-xs ${scoreStyle(session.overallScore)}`}>
-                                    {(session.overallScore || 0).toFixed(1)} / 10
-                                 </div>
-                              </td>
-                              <td className="px-8 py-6">
-                                 <div className="flex flex-col">
-                                    <span className="text-sm font-bold text-slate-700">
-                                       {new Date(session.updatedAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
-                                    </span>
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
-                                       <Clock className="w-3 h-3" />
-                                       {new Date(session.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </span>
-                                 </div>
-                              </td>
-                              <td className="px-8 py-6 text-right">
-                                 <button 
-                                    onClick={() => navigate(`/interview/${session._id}/results`)}
-                                    className="p-3 rounded-2xl text-slate-300 hover:text-accent hover:bg-accent/5 transition-all group-hover:translate-x-1"
-                                 >
-                                    <ChevronRight className="w-5 h-5" />
-                                 </button>
-                              </td>
-                           </tr>
+                           <InterviewCard key={session._id} session={session} />
                         ))}
                      </tbody>
                   </table>

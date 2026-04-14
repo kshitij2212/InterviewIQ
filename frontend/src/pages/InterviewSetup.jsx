@@ -2,25 +2,27 @@ import { useState, useMemo, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import {
   Code2, Database, Layers, Server, Smartphone,
-  Brain, BarChart2, Users, MessageSquare,
+  Brain, BarChart2, Users, MessageSquare, User, AlertCircle, X,
   TrendingUp, AlignLeft, ArrowRight, Lightbulb, ChevronRight, Home, Loader2, Sparkles
 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { interviewApi } from '../api/interview'
 import Header from '../components/landing/Header'
 import Footer from '../components/landing/Footer'
 import { Button } from '../components/ui/Button'
+import { useAuthStore } from '../store/authStore'
 
 
 const ROLE_META = {
   frontend:     { icon: Code2,         sub: 'React, Vue, Angular' },
   backend:      { icon: Server,        sub: 'Node, Django, Spring' },
-  fullstack:    { icon: Layers,        sub: 'End-to-end development' },
   devops:       { icon: Database,      sub: 'CI/CD, Cloud, Infra' },
   mobile:       { icon: Smartphone,    sub: 'iOS, Android, RN' },
   ai_ml:        { icon: Brain,         sub: 'Models & Pipelines' },
   data_science: { icon: BarChart2,     sub: 'Analytics & Insights' },
   hr:           { icon: Users,         sub: 'People & Culture' },
   general:      { icon: MessageSquare, sub: 'Mixed Topics' },
+  introduction: { icon: User,          sub: 'Personal Background' }
 }
 
 const TYPE_META = {
@@ -34,7 +36,7 @@ const LEVEL_META = {
   senior:  { label: 'Senior',  badge: '3+ yr'  },
 }
 
-const ESTIMATED_TIMES = { 5: 10, 8: 15, 10: 20 }
+const ESTIMATED_TIMES = { 3: 5, 5: 10, 8: 15 }
 
 const SPEC_META = {
   react:          'Frontend library',
@@ -225,16 +227,19 @@ function SummaryRow({ label, value }) {
 
 export default function InterviewSetupPage() {
   const navigate = useNavigate()
+  const { isAuthenticated } = useAuthStore()
 
   const [bootstrapping, setBootstrapping] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
+  const [showProPopup, setShowProPopup] = useState(false)
 
   const [remoteConfig, setRemoteConfig] = useState({
     roles: {},
     levels: [],
     interviewTypes: [],
-    questionOptions: []
+    questionOptions: [],
+    limitReached: false
   })
 
   const [selectedRole,  setSelectedRole]  = useState('')
@@ -244,6 +249,11 @@ export default function InterviewSetupPage() {
   const [selectedCount, setSelectedCount] = useState(0)
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login')
+      return
+    }
+
     interviewApi.getSetupConfig()
       .then(res => {
         const cfg = res.data.data
@@ -260,7 +270,7 @@ export default function InterviewSetupPage() {
         console.error(err)
       })
       .finally(() => setBootstrapping(false))
-  }, [])
+  }, [isAuthenticated, navigate])
 
   const currentSpecs     = remoteConfig.roles[selectedRole] || null
   const hasSpecialization = currentSpecs !== null
@@ -322,6 +332,37 @@ export default function InterviewSetupPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <AnimatePresence>
+        {showProPopup && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm px-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="bg-white max-w-md w-full rounded-[2.5rem] p-10 shadow-2xl relative border border-slate-100"
+            >
+              <button onClick={() => setShowProPopup(false)} className="absolute top-6 right-6 text-slate-300 hover:text-slate-500 transition-colors">
+                 <X className="w-6 h-6" />
+              </button>
+              <div className="w-20 h-20 bg-amber-50 rounded-3xl flex items-center justify-center mb-8 mx-auto border border-amber-100 shadow-inner">
+                 <Sparkles className="w-10 h-10 text-amber-500" />
+              </div>
+              <h3 className="text-2xl font-black text-center tracking-tighter text-slate-900 mb-4 px-4 uppercase">Unlock Unlimited Potential</h3>
+              <p className="text-center text-slate-500 font-medium mb-10 leading-relaxed text-sm">
+                You've reached your daily Mock Interview limit. Upgrade to InterviewIQ Pro to practice without boundaries and receive deep algorithmic insights!
+              </p>
+              <Button onClick={() => { setShowProPopup(false); alert('Razorpay integration coming soon!') }} className="w-full h-14 bg-slate-900 hover:bg-slate-800 text-white font-black tracking-widest text-[10px] uppercase shadow-xl shadow-slate-900/20 rounded-2xl transition-all hover:scale-105 active:scale-95">
+                 Upgrade to Pro — ₹999/mo
+              </Button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <Header />
       <div className="h-16" />
 
@@ -349,11 +390,7 @@ export default function InterviewSetupPage() {
 
         <Stepper current={1} />
 
-        {error && (
-          <div className="mb-8 rounded-xl border border-red-200/60 bg-red-50/60 backdrop-blur-sm px-4 py-3 text-sm text-red-500">
-            {error}
-          </div>
-        )}
+ 
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
 
@@ -450,17 +487,41 @@ export default function InterviewSetupPage() {
                 ))}
               </div>
 
-              <div className="bg-white px-6 pb-6 pt-4">
-                <Button
-                  onClick={startInterview}
-                  disabled={loading}
-                  className="w-full py-6 font-bold uppercase tracking-widest shadow-lg shadow-accent/20"
-                >
-                  {loading
-                    ? <><Loader2 size={16} className="animate-spin mr-2" /> Starting…</>
-                    : <>Start Interview <ArrowRight size={16} className="ml-2" /></>
-                  }
-                </Button>
+              <div className="bg-white px-6 pb-6 pt-4 space-y-4">
+                <AnimatePresence>
+                  {error && !error.toLowerCase().includes('limit') && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 5 }} 
+                      animate={{ opacity: 1, y: 0 }} 
+                      exit={{ opacity: 0, height: 0 }}
+                      className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600 shadow-sm flex items-start gap-2 overflow-hidden mb-4"
+                    >
+                      <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                      <p className="leading-snug">{error}</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {remoteConfig.limitReached || error?.toLowerCase().includes('limit') ? (
+                  <Button
+                    onClick={() => setShowProPopup(true)}
+                    className="w-full py-6 font-black uppercase tracking-widest bg-slate-900 hover:bg-slate-800 text-white shadow-xl shadow-slate-900/20 transition-all hover:scale-105 active:scale-95"
+                  >
+                    <Sparkles size={16} className="mr-2 text-amber-500" /> Unlock Pro
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={startInterview}
+                    disabled={loading}
+                    className="w-full py-6 font-bold uppercase tracking-widest shadow-lg shadow-accent/20"
+                  >
+                    {loading
+                      ? <><Loader2 size={16} className="animate-spin mr-2" /> Starting…</>
+                      : <>Start Interview <ArrowRight size={16} className="ml-2" /></>
+                    }
+                  </Button>
+                )}
+                
                 <p className="mt-4 text-center text-xs text-muted-foreground uppercase tracking-wider">
                   Estimated time: {ESTIMATED_TIMES[selectedCount] || (selectedCount * 4)} minutes
                 </p>
