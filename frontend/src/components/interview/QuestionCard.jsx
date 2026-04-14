@@ -1,7 +1,29 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
+import { Volume2, VolumeX } from 'lucide-react'
 
-export default function QuestionCard({ currentQuestion }) {
+const SPEEDS = [
+  { label: 'Slow', rate: 0.5 },
+  { label: 'Normal', rate: 0.85 },
+  { label: 'Fast', rate: 1.1 },
+]
+
+export default function QuestionCard({ currentQuestion, onQuestionSpeak, ttsEnabled }) {
+  const text = currentQuestion?.question?.text
+  const [rate, setRate] = useState(0.85)
+
+  useEffect(() => {
+    if (text && onQuestionSpeak && ttsEnabled) {
+      onQuestionSpeak(text, rate)
+    }
+  }, [text])
+
+  const handleRecite = () => {
+    if (text && onQuestionSpeak) {
+      onQuestionSpeak(text, rate)
+    }
+  }
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
@@ -14,10 +36,45 @@ export default function QuestionCard({ currentQuestion }) {
           ACTIVE QUESTION {(currentQuestion?.index || 0) + 1}
         </span>
         <div className="h-px flex-1 bg-border/60" />
+
+        <div className="flex items-center gap-1 bg-secondary/60 rounded-lg p-1 border border-border/50">
+          {SPEEDS.map(s => (
+            <button
+              key={s.label}
+              onClick={() => setRate(s.rate)}
+              className={`text-[10px] font-bold px-2 py-1 rounded-md transition-all ${
+                rate === s.rate
+                  ? 'bg-accent text-accent-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            onClick={() => window.speechSynthesis.cancel()}
+            className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground hover:text-red-500 bg-secondary/50 px-2.5 py-1.5 rounded-lg border border-border/50 hover:border-red-500/30 transition-all uppercase tracking-wide"
+            title="Stop reading aloud"
+          >
+            <VolumeX size={13} />
+            Stop
+          </button>
+          <button
+            onClick={handleRecite}
+            className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground hover:text-accent bg-secondary/50 px-2.5 py-1.5 rounded-lg border border-border/50 hover:border-accent/30 transition-all uppercase tracking-wide"
+            title="Read question aloud"
+          >
+            <Volume2 size={13} />
+            Recite
+          </button>
+        </div>
       </div>
 
       <h2 className="text-2xl lg:text-3xl font-extrabold text-foreground leading-tight mb-8 tracking-tight">
-        {currentQuestion?.question?.text}
+        {text}
       </h2>
 
       <div className="flex flex-wrap gap-2">

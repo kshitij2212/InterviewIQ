@@ -5,8 +5,8 @@ const testimonials = [
   { name: 'Shivam Dixit', role: 'Software Engineer at Google', quote: 'Interview IQ helped me land my dream job at Google. The AI mock interviews were incredibly realistic.' },
   { name: 'Abhay Raj', role: 'Senior Developer at Meta', quote: 'The personalized feedback after each session helped me identify and fix my weak points quickly.' },
   { name: 'Akshit Tomar', role: 'Tech Lead at Amazon', quote: 'Best investment I made in my career. The system design practice was exactly what I needed.' },
-  { name: 'Khyati Kapil', role: 'Staff Engineer at Apple', quote: 'The AI interviewer asks questions just like real interviewers. Highly recommended!' },
-  { name: 'Shreya Saxena', role: 'Backend Engineer at Netflix', quote: 'Went from failing interviews to getting multiple offers. This platform is a game-changer.' },
+  { name: 'Khyati Kapil', role: 'Staff Engineer at Apple', quote: 'Went from failing interviews to getting multiple offers. This platform is a game-changer.' },
+  { name: 'Shreya Saxena', role: 'Data Analyst at Mu Sigma', quote: 'The AI interviewer asks questions just like real interviewers. Highly recommended!' },
   { name: 'Shradhha Jaiswal', role: 'SDE II at Microsoft', quote: 'The analytics helped me track my progress and stay motivated throughout my prep.' },
 ]
 
@@ -26,7 +26,7 @@ export default function Testimonials() {
                   <Star key={i} className="h-4 w-4 fill-accent text-accent" />
                 ))}
               </div>
-              <p className="mb-4 text-muted-foreground">"{quote}"</p>
+              <p className="mb-4 text-muted-foreground">{quote}</p>
               <div>
                 <div className="font-semibold">{name}</div>
                 <div className="text-sm text-muted-foreground">{role}</div>

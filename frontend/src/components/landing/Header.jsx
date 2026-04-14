@@ -7,10 +7,10 @@ import { useInterviewStore } from '../../store/interviewStore'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 
 const LANDING_NAV = [
-  { label: 'Features', href: '#features' },
-  { label: 'Pricing', href: '#pricing' },
-  { label: 'Testimonials', href: '#testimonials' },
-  { label: 'FAQ', href: '#faq' },
+  { label: 'Features', href: '/#features' },
+  { label: 'Pricing', href: '/#pricing' },
+  { label: 'Testimonials', href: '/#testimonials' },
+  { label: 'FAQ', href: '/#faq' },
 ]
 
 const APP_NAV = [
