@@ -40,10 +40,29 @@ export default function InterviewPage() {
   const speak = (text, rate = 0.85) => {
     if (!text || !window.speechSynthesis) return
     window.speechSynthesis.cancel()
-    const u = new SpeechSynthesisUtterance(text)
-    u.lang = 'en-US'
-    u.rate = rate
-    window.speechSynthesis.speak(u)
+    
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.rate = rate
+    
+    // Find the best available voice
+    const voices = window.speechSynthesis.getVoices()
+    
+    // Preferred voices in order of quality/naturalness
+    // 1. "Google US English" in Chrome (sometimes has a high quality version)
+    // 2. "Natural" voices (some browsers prefix with this)
+    // 3. "Samantha" (Standard high quality Mac voice)
+    // 4. Any English US voice
+    const preferredVoice = voices.find(v => v.name.includes('Natural') && v.lang.startsWith('en')) ||
+                          voices.find(v => v.name === 'Google US English' && v.lang === 'en-US') ||
+                          voices.find(v => v.name.includes('Samantha') && v.lang.startsWith('en')) ||
+                          voices.find(v => v.lang.startsWith('en-US')) ||
+                          voices[0]
+
+    if (preferredVoice) {
+      utterance.voice = preferredVoice
+    }
+    
+    window.speechSynthesis.speak(utterance)
   }
 
 
