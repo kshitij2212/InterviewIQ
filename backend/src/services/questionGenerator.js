@@ -12,22 +12,53 @@ async function generateQuestions({ role, specialization, level, questionType, co
         INTERVIEW_QUESTION_LIMITS.max
     )
 
-    const prompt = `Generate exactly ${safeCount} interview questions for a ${level} ${role} role${specialization ? ` specializing in ${specialization}` : ''}.
+    const isHR = questionType === 'hr' || role === 'introduction'
+    const systemPrompt = isHR 
+        ? 'You are an expert HR and behavioral interviewer. You only output valid JSON. You must return a JSON object with a "questions" key.'
+        : 'You are a technical interviewer. You only output valid JSON. You must return a JSON object with a "questions" key.'
+
+    let prompt = `Generate exactly ${safeCount} interview questions for a ${level} ${role} role${specialization ? ` specializing in ${specialization}` : ''}.
 The questions must be of type: ${questionType}.
 
-Return a JSON object with a "questions" key containing the array. Each question MUST include at least 3-5 relevant technical keywords:
+Return a JSON object with a "questions" key containing the array. Each question MUST include:
+1. The question text in "text"
+2. At least 3-5 relevant ${isHR ? 'behavioral and soft-skill' : 'technical'} keywords in "expectedKeywords"
+3. A highly accurate, concise, ideal 10/10 answer for this specific question in "bestResponse"
+
 {
   "questions": [
-    { "text": "...", "expectedKeywords": ["keyword1", "keyword2", "keyword3", "keyword4"] }
+    { 
+      "text": "...", 
+      "expectedKeywords": ["keyword1", "keyword2", "keyword3"],
+      "bestResponse": "..."
+    }
   ]
 }`
+
+    if (role === 'introduction') {
+        prompt = `Generate exactly ${safeCount} personal introduction and behavioral interview questions for a candidate to assess their background, soft-skills, and communication baseline. Do not ask technical questions.
+Return a JSON object with a "questions" key containing the array. Each question MUST include:
+1. The question text in "text"
+2. At least 3-5 relevant soft-skill/behavioral keywords in "expectedKeywords"
+3. A highly accurate, concise, ideal 10/10 answer for this specific question in "bestResponse"
+
+{
+  "questions": [
+    { 
+      "text": "...", 
+      "expectedKeywords": ["keyword1", "keyword2", "keyword3"],
+      "bestResponse": "..."
+    }
+  ]
+}`
+    }
 
     let raw
     try {
         const response = await groq.chat.completions.create({
             model: 'llama-3.3-70b-versatile',
             messages: [
-                { role: 'system', content: 'You are a technical interviewer. You only output valid JSON. You must return a JSON object with a "questions" key.' },
+                { role: 'system', content: systemPrompt },
                 { role: 'user', content: prompt }
             ],
             response_format: { type: 'json_object' },
@@ -63,7 +94,8 @@ Return a JSON object with a "questions" key containing the array. Each question 
             questionType,
             expectedKeywords: Array.isArray(q.expectedKeywords)
                 ? q.expectedKeywords.filter(k => typeof k === 'string' && k.trim())
-                : []
+                : [],
+            bestResponse: typeof q.bestResponse === 'string' ? q.bestResponse.trim() : null
         }))
 
     if (docs.length === 0) throw new Error('Groq returned no valid questions after filtering')

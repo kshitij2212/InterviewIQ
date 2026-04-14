@@ -79,6 +79,10 @@ const questionSchema = new mongoose.Schema(
             type: [String],
             default: []
         },
+        bestResponse: {
+            type: String,
+            default: null
+        },
         active: {
             type: Boolean,
             default: true
@@ -142,7 +146,7 @@ questionSchema.pre(['updateOne', 'updateMany'], async function () {
         update.$set.expectedKeywords = normalizeKeywords(incomingKeywords)
     }
 
-    const rootFields = ['role', 'specialization', 'text', 'expectedKeywords']
+    const rootFields = ['role', 'specialization', 'text', 'expectedKeywords', 'bestResponse']
     rootFields.forEach(field => delete update[field])
 })
 
