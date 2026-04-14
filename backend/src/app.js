@@ -18,7 +18,12 @@ const app = express()
 app.use(helmet())
 app.use(morgan('dev'))
 app.use(compression())
-app.use(cors())
+const corsOptions = {
+    origin: process.env.FRONTEND_URL || '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}
+app.use(cors(corsOptions))
 app.use(express.json())
 
 app.get('/', (req, res) => {
