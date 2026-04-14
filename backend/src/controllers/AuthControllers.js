@@ -14,10 +14,13 @@ function generateToken(userId) {
 
 function sanitizeUser(user) {
     return {
-        _id:    user._id,
-        name:   user.name,
-        email:  user.email,
-        avatar: user.avatar || null
+        _id:       user._id,
+        name:      user.name,
+        email:     user.email,
+        avatar:    user.avatar || null,
+        googleId:  user.googleId || null,
+        planType:  user.planType || 'free',
+        createdAt: user.createdAt
     }
 }
 

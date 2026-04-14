@@ -58,7 +58,16 @@ async function startInterview(req, res, next) {
 
         const questionType = type === 'hr' ? 'hr' : 'technical'
 
-        const questionQuery = { active: true, role, level, questionType }
+        const previousSessions = await Interview.find({ userId }).select('questionIds').lean()
+        const seenQuestionIds = previousSessions.flatMap(s => s.questionIds)
+
+        const questionQuery = { 
+            active: true, 
+            role, 
+            level, 
+            questionType,
+            _id: { $nin: seenQuestionIds }
+        }
         if (specialization) questionQuery.specialization = specialization
 
         let questions = await Question.aggregate([
