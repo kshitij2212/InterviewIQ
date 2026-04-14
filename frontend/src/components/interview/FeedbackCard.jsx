@@ -12,7 +12,7 @@ export default function FeedbackCard({ answer, index }) {
   const isSubmitted = answer.status === 'submitted'
 
   return (
-    <div className={`bg-white rounded-[2rem] border transition-all duration-300 ${isOpen ? 'border-accent/30 shadow-xl shadow-accent/5' : 'border-slate-200/60 shadow-sm hover:border-slate-300'}`}>
+    <div className={`bg-white rounded-2xl border transition-all duration-300 ${isOpen ? 'border-accent/30 shadow-xl shadow-accent/5' : 'border-slate-200/60 shadow-sm hover:border-slate-300'}`}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
         className="w-full text-left p-6 lg:p-8 flex items-center justify-between gap-6 focus:outline-none"

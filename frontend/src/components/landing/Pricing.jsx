@@ -1,20 +1,21 @@
 import { CheckCircle2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 
 const plans = [
   {
-    name: 'Starter',
-    price: '₹0',
-    description: 'Perfect for exploring the platform',
-    features: ['5 AI mock interviews/month', 'Basic feedback', 'Limited question bank', 'Community access'],
-    popular: false,
-  },
-  {
     name: 'Pro',
     price: '₹999',
     description: 'Best for serious job seekers',
     features: ['Unlimited AI interviews', 'Detailed feedback & analytics', 'Full question bank', 'System design practice', 'Priority support'],
+    popular: false,
+  },
+  {
+    name: 'Starter',
+    price: '₹0',
+    description: 'Perfect for exploring the platform',
+    features: ['3 AI mock interviews/day', 'Basic feedback', 'Limited question bank', 'Community access', '100+ Interview Questions'],
     popular: true,
   },
   {
@@ -23,10 +24,12 @@ const plans = [
     description: 'For teams and organizations',
     features: ['Everything in Pro', 'Team analytics', 'Custom question sets', 'Dedicated success manager', 'API access'],
     popular: false,
+    comingSoon: true,
   },
 ]
 
 export default function Pricing() {
+  const navigate = useNavigate()
   return (
     <section id="pricing" className="border-y border-border bg-card py-24">
       <div className="mx-auto max-w-7xl px-6">
@@ -35,7 +38,7 @@ export default function Pricing() {
           <p className="text-muted-foreground">Choose the plan that fits your interview timeline.</p>
         </div>
         <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-3">
-          {plans.map(({ name, price, description, features, popular }) => (
+          {plans.map(({ name, price, description, features, popular, comingSoon }) => (
             <Card
               key={name}
               className={`relative bg-background p-6 ${popular ? 'border-accent ring-1 ring-accent' : ''}`}
@@ -61,12 +64,22 @@ export default function Pricing() {
                   </li>
                 ))}
               </ul>
-              <Button
-                className={`w-full ${popular ? 'bg-accent text-accent-foreground hover:bg-accent/90' : ''}`}
-                variant={popular ? 'default' : 'outline'}
-              >
-                Get Started
-              </Button>
+              {comingSoon ? (
+                <button
+                  disabled
+                  className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 py-2.5 text-sm font-medium text-gray-400 cursor-not-allowed select-none"
+                >
+                  Coming Soon
+                </button>
+              ) : (
+                <Button
+                  className={`w-full ${popular ? 'bg-accent text-accent-foreground hover:bg-accent/90' : ''}`}
+                  variant={popular ? 'default' : 'outline'}
+                  onClick={() => navigate('/login')}
+                >
+                  Get Started
+                </Button>
+              )}
             </Card>
           ))}
         </div>

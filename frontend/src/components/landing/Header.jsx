@@ -6,7 +6,14 @@ import { useAuthStore } from '../../store/authStore'
 import { useInterviewStore } from '../../store/interviewStore'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 
-const NAV_ITEMS = [
+const LANDING_NAV = [
+  { label: 'Features', href: '#features' },
+  { label: 'Pricing', href: '#pricing' },
+  { label: 'Testimonials', href: '#testimonials' },
+  { label: 'FAQ', href: '#faq' },
+]
+
+const APP_NAV = [
   { label: 'Dashboard', to: '/dashboard' },
   { label: 'Interview', to: '/interview/setup' },
   { label: 'Resources', to: '/resources' },
@@ -106,20 +113,31 @@ export default function Header() {
           </Link>
 
           <nav className="hidden items-center gap-8 md:flex">
-            {NAV_ITEMS.map(({ label, to }) => (
-              <Link
-                key={label}
-                to={to}
-                onClick={() => setActive(label)}
-                className={`text-sm transition-colors duration-200 ${
-                  active === label
-                    ? 'text-foreground font-medium'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {label}
-              </Link>
-            ))}
+            {isAuthenticated
+              ? APP_NAV.map(({ label, to }) => (
+                  <Link
+                    key={label}
+                    to={to}
+                    onClick={() => setActive(label)}
+                    className={`text-sm transition-colors duration-200 ${
+                      active === label
+                        ? 'text-foreground font-medium'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {label}
+                  </Link>
+                ))
+              : LANDING_NAV.map(({ label, href }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
+                  >
+                    {label}
+                  </a>
+                ))
+            }
           </nav>
 
           <div className="hidden items-center gap-4 md:flex">
@@ -231,20 +249,30 @@ export default function Header() {
             className="fixed left-4 right-4 top-[4.5rem] z-40 rounded-2xl border border-border bg-background/95 p-4 shadow-2xl backdrop-blur-xl md:hidden"
           >
             <nav className="flex flex-col gap-1">
-              {NAV_ITEMS.map(({ label, to }, i) => (
+              {(isAuthenticated ? APP_NAV : LANDING_NAV).map((item, i) => (
                 <motion.div
-                  key={label}
+                  key={item.label}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.04, duration: 0.2 }}
                 >
-                  <Link
-                    to={to}
-                    onClick={() => { setActive(label); setOpen(false) }}
-                    className="rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground block"
-                  >
-                    {label}
-                  </Link>
+                  {isAuthenticated ? (
+                    <Link
+                      to={item.to}
+                      onClick={() => { setActive(item.label); setOpen(false) }}
+                      className="rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground block"
+                    >
+                      {item.label}
+                    </Link>
+                  ) : (
+                    <a
+                      href={item.href}
+                      onClick={() => setOpen(false)}
+                      className="rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground block"
+                    >
+                      {item.label}
+                    </a>
+                  )}
                 </motion.div>
               ))}
             </nav>

@@ -15,7 +15,7 @@ export default function AnswerRecorder({
   setStatus
 }) {
   return (
-    <div className="bg-card rounded-3xl p-8 lg:p-12 border border-border shadow-sm flex flex-col items-center justify-center min-h-[420px] relative">
+    <div className="bg-card rounded-2xl p-8 lg:p-12 border border-border shadow-sm flex flex-col items-center justify-center min-h-[420px] relative">
       <AnimatePresence mode="wait">
         {status === 'idle' && !transcript && (
           <motion.div 
@@ -24,7 +24,7 @@ export default function AnswerRecorder({
           >
             <button 
               onClick={handleStartRecording}
-              className="w-24 h-24 rounded-3xl bg-accent flex items-center justify-center shadow-xl shadow-accent/30 hover:scale-105 active:scale-95 transition-all group"
+              className="w-24 h-24 rounded-2xl bg-accent flex items-center justify-center shadow-xl shadow-accent/30 hover:scale-105 active:scale-95 transition-all group"
             >
               <Mic className="w-10 h-10 text-white group-hover:scale-110 transition-transform" />
             </button>

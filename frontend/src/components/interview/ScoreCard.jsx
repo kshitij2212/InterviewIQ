@@ -12,7 +12,7 @@ export default function ScoreCard({
 }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-10">
-      <div className="lg:col-span-4 bg-white rounded-[2.5rem] p-8 border border-slate-200/60 shadow-sm flex flex-col items-center">
+      <div className="lg:col-span-4 bg-white rounded-2xl p-8 border border-slate-200/60 shadow-sm flex flex-col items-center">
          <h3 className="w-full text-[10px] font-black tracking-widest text-slate-400 uppercase mb-8">Composite Score</h3>
          <div className="relative flex items-center justify-center mb-8">
             <svg className="w-48 h-48 -rotate-90">
@@ -34,7 +34,7 @@ export default function ScoreCard({
          </div>
       </div>
 
-      <div className="lg:col-span-8 bg-white rounded-[2.5rem] p-10 border border-slate-200/60 shadow-sm">
+      <div className="lg:col-span-8 bg-white rounded-2xl p-10 border border-slate-200/60 shadow-sm">
         <div className="flex items-center justify-between mb-10">
            <div>
               <h3 className="text-[10px] font-black tracking-widest text-slate-400 uppercase">Intelligence Infographic</h3>
@@ -54,7 +54,7 @@ export default function ScoreCard({
              const verdict = stat.val >= 90 ? 'Expert' : stat.val >= 70 ? 'Proficient' : stat.val >= 50 ? 'Developing' : 'Initial'
              
              return (
-                <div key={stat.label} className="p-5 rounded-3xl border border-slate-100 bg-slate-50/30 hover:bg-white hover:shadow-xl hover:shadow-slate-200/40 transition-all group overflow-hidden relative">
+                <div key={stat.label} className="p-5 rounded-2xl border border-slate-100 bg-slate-50/30 hover:bg-white hover:shadow-xl hover:shadow-slate-200/40 transition-all group overflow-hidden relative">
                    <div className="flex items-center justify-between mb-4">
                       <div className={`p-2.5 rounded-xl ${stat.bg} ${stat.color} transition-transform group-hover:scale-110`}>
                          <Icon className="w-4 h-4" />

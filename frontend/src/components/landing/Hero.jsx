@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion'
 import { ArrowRight, MessageSquare, Play, Zap } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '../ui/Button'
+import { useAuthStore } from '../../store/authStore'
 import YouTube from '../../assets/youtube.png'
 import linkedIn from '../../assets/linkedIn.png'
 import airbnb from '../../assets/airbnb.png'
@@ -79,6 +81,17 @@ const COMPANY_LOGOS = [
 ]
 
 export default function Hero() {
+  const navigate = useNavigate()
+  const { isAuthenticated } = useAuthStore()
+
+  const handleStartTrial = () => {
+    if (isAuthenticated) {
+      navigate('/dashboard')
+    } else {
+      navigate('/login')
+    }
+  }
+
   return (
     <section className="relative overflow-hidden pt-32 pb-20">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-accent/20 via-transparent to-transparent" />
@@ -100,13 +113,13 @@ export default function Hero() {
           </p>
 
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Button size="lg" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 sm:w-auto">
+            <Button 
+                size="lg" 
+                onClick={handleStartTrial}
+                className="w-full bg-accent text-accent-foreground hover:bg-accent/90 sm:w-auto"
+            >
               Start Free Trial
               <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-            <Button size="lg" variant="outline" className="w-full sm:w-auto">
-              <Play className="mr-2 h-4 w-4" />
-              Watch Demo
             </Button>
           </div>
 
@@ -148,34 +161,6 @@ export default function Hero() {
               </motion.div>
             </div>
           </div>
-        </div>
-
-        <div className="relative mx-auto mt-16 max-w-5xl">
-          <div className="rounded-xl border border-border bg-card p-2 shadow-2xl shadow-accent/10">
-            <div className="flex items-center gap-2 rounded-t-lg bg-secondary px-4 py-3">
-              <div className="flex gap-2">
-                <div className="h-3 w-3 rounded-full bg-red-500" />
-                <div className="h-3 w-3 rounded-full bg-yellow-500" />
-                <div className="h-3 w-3 rounded-full bg-green-500" />
-              </div>
-              <div className="ml-4 flex-1">
-                <div className="mx-auto max-w-md rounded-md bg-background/50 px-4 py-1.5 text-center text-xs text-muted-foreground">
-                  app.interviewiq.ai
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-b-lg bg-background overflow-hidden aspect-[16/10] relative">
-               <img 
-                 src={dashboardMockup} 
-                 alt="InterviewIQ Dashboard" 
-                 className="w-full h-full object-cover object-top"
-               />
-            </div>
-          </div>
-
-          <div className="absolute -left-4 -bottom-4 -z-10 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
-          <div className="absolute -right-4 -top-4 -z-10 h-72 w-72 rounded-full bg-accent/5 blur-3xl" />
         </div>
       </div>
     </section>
