@@ -4,7 +4,7 @@ import {
   Mic, StopCircle, RotateCcw, Send, ChevronLeft, ChevronRight, 
   Settings, Clock, AlertCircle, CheckCircle2, Info, Lightbulb, 
   Brain, User, Ghost, Loader2, MoreVertical, XCircle, FastForward,
-  Sparkles, Waves
+  Sparkles, Waves, Volume2, VolumeX
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { interviewApi } from '../api/interview'
@@ -25,7 +25,9 @@ export default function InterviewPage() {
   const [loading, setLoading] = useState(false)
   const [analyzing, setAnalyzing] = useState(false)
   const [interviewData, setInterviewData] = useState(null)
-  
+  const [sessionStarted, setSessionStarted] = useState(false)
+  const [ttsEnabled, setTtsEnabled] = useState(true)
+
   const [status, setStatus] = useState('idle')
   const [transcript, setTranscript] = useState('')
   const [timeLeft, setTimeLeft] = useState(QUESTION_TIME_LIMIT)
@@ -35,6 +37,16 @@ export default function InterviewPage() {
   const audioChunksRef = useRef([])
   const autoSubmitPendingRef = useRef(false)
 
+  const speak = (text, rate = 0.85) => {
+    if (!text || !window.speechSynthesis) return
+    window.speechSynthesis.cancel()
+    const u = new SpeechSynthesisUtterance(text)
+    u.lang = 'en-US'
+    u.rate = rate
+    window.speechSynthesis.speak(u)
+  }
+
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/')
@@ -43,12 +55,31 @@ export default function InterviewPage() {
     refreshSessionState()
   }, [id, isAuthenticated, navigate])
 
-  async function refreshSessionState() {
+  async function refreshSessionState(isSubsequent = false) {
     try {
       setLoading(true)
       const { data } = await interviewApi.getInterviewSession(id)
       setInterviewData(data.data)
-      setTimeLeft(QUESTION_TIME_LIMIT)
+      
+      const qIndex = data.data.currentQuestion?.index
+      if (qIndex !== undefined) {
+        const storageKey = `interview_${id}_q_${qIndex}_startTime`
+        const existingStartTime = localStorage.getItem(storageKey)
+        
+        let initialTimeLeft = QUESTION_TIME_LIMIT
+        if (existingStartTime) {
+          const elapsedSeconds = Math.floor((Date.now() - parseInt(existingStartTime, 10)) / 1000)
+          initialTimeLeft = Math.max(0, QUESTION_TIME_LIMIT - elapsedSeconds)
+        }
+        setTimeLeft(initialTimeLeft)
+
+        if (isSubsequent && !existingStartTime) {
+          localStorage.setItem(storageKey, Date.now().toString())
+        }
+      } else {
+        setTimeLeft(QUESTION_TIME_LIMIT)
+      }
+      
       setBootstrapping(false)
     } catch (err) {
       console.error(err)
@@ -59,7 +90,7 @@ export default function InterviewPage() {
   }
 
   useEffect(() => {
-    if (!bootstrapping && timeLeft > 0 && !analyzing) {
+    if (!bootstrapping && sessionStarted && timeLeft > 0 && !analyzing) {
       timerRef.current = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
@@ -73,7 +104,7 @@ export default function InterviewPage() {
       clearInterval(timerRef.current)
     }
     return () => clearInterval(timerRef.current)
-  }, [bootstrapping, timeLeft, analyzing])
+  }, [bootstrapping, sessionStarted, timeLeft, analyzing])
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60)
@@ -157,7 +188,7 @@ export default function InterviewPage() {
         await interviewApi.complete(id)
         navigate(`/interview/${id}/results`)
       } else {
-        await refreshSessionState()
+        await refreshSessionState(true)
         setStatus('idle')
         setTranscript('')
       }
@@ -186,7 +217,7 @@ export default function InterviewPage() {
       } else {
         setTranscript('')
         setStatus('idle')
-        await refreshSessionState()
+        await refreshSessionState(true)
       }
     } catch (err) {
       console.error(err)
@@ -222,15 +253,52 @@ export default function InterviewPage() {
   }
 
   const { interview, answers, currentQuestion } = interviewData
+  const handleStartSession = (enableAudio) => {
+    const qIndex = currentQuestion?.index
+    if (qIndex !== undefined) {
+      const storageKey = `interview_${id}_q_${qIndex}_startTime`
+      if (!localStorage.getItem(storageKey)) {
+        localStorage.setItem(storageKey, Date.now().toString())
+      }
+    }
+    setTtsEnabled(enableAudio)
+    if (enableAudio) {
+      speak(currentQuestion?.question?.text)
+    }
+    setSessionStarted(true)
+  }
+
+  if (!sessionStarted) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-6 px-4 text-center">
+        <h1 className="text-3xl font-extrabold tracking-tighter text-foreground">Ready to begin?</h1>
+        <p className="text-muted-foreground text-sm max-w-md">Would you like the AI interviewer to read the questions aloud automatically?</p>
+        <div className="flex flex-col sm:flex-row gap-4 mt-6">
+          <button
+            onClick={() => handleStartSession(true)}
+            className="flex items-center justify-center gap-2 bg-accent text-accent-foreground font-bold px-8 py-4 rounded-xl shadow-lg hover:bg-accent/90 transition-all uppercase tracking-widest text-sm"
+          >
+            <Volume2 size={18} /> Yes, Read Aloud
+          </button>
+          <button
+            onClick={() => handleStartSession(false)}
+            className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground font-bold px-8 py-4 rounded-xl border border-border shadow-sm hover:bg-secondary/80 transition-all uppercase tracking-widest text-sm"
+          >
+            <VolumeX size={18} /> No, I'll Read
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col font-sans selection:bg-accent/30 text-foreground overflow-x-hidden">
       
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border h-16 flex items-center px-6">
         <div className="mx-auto w-full max-w-7xl flex items-center justify-between">
-          <Link to="/" className="text-xl font-extrabold tracking-tighter hover:opacity-80 transition-opacity uppercase">
+          <div className="text-xl font-extrabold tracking-tighter cursor-default uppercase">
              INTERVIEW<span className="text-accent">IQ</span>
-          </Link>
+          </div>
           
           <div className="flex items-center gap-4">
                <Timer timeLeft={timeLeft} />
@@ -250,7 +318,7 @@ export default function InterviewPage() {
         
         <div className="flex flex-col gap-8">
           
-          <QuestionCard currentQuestion={currentQuestion} />
+          <QuestionCard currentQuestion={currentQuestion} onQuestionSpeak={speak} ttsEnabled={ttsEnabled} />
 
           <AnswerRecorder 
             status={status} 
