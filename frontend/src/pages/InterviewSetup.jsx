@@ -3,24 +3,27 @@ import { useNavigate, Link } from 'react-router-dom'
 import {
   Code2, Database, Layers, Server, Smartphone,
   Brain, BarChart2, Users, MessageSquare, User, AlertCircle, X,
-  TrendingUp, AlignLeft, ArrowRight, Lightbulb, ChevronRight, Home, Loader2, Sparkles
+  TrendingUp, AlignLeft, ArrowRight, Lightbulb, ChevronRight, Home, Loader2, Sparkles,
+  Coffee, Cpu, Binary, Braces
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { interviewApi } from '../api/interview'
+import { paymentApi } from '../api/payment'
 import { Button } from '../components/ui/Button'
 import { useAuthStore } from '../store/authStore'
+import { toast } from 'react-hot-toast'
 
 
 const ROLE_META = {
-  frontend:     { icon: Code2,         sub: 'React, Vue, Angular' },
-  backend:      { icon: Server,        sub: 'Node, Django, Spring' },
-  devops:       { icon: Database,      sub: 'CI/CD, Cloud, Infra' },
-  mobile:       { icon: Smartphone,    sub: 'iOS, Android, RN' },
-  ai_ml:        { icon: Brain,         sub: 'Models & Pipelines' },
-  data_science: { icon: BarChart2,     sub: 'Analytics & Insights' },
-  hr:           { icon: Users,         sub: 'People & Culture' },
-  general:      { icon: MessageSquare, sub: 'Mixed Topics' },
-  introduction: { icon: User,          sub: 'Personal Background' }
+  frontend:              { icon: Code2,         sub: 'React, Vue, Angular' },
+  backend:               { icon: Server,        sub: 'Node, Django, Spring' },
+  coding_languages:      { icon: Braces,        sub: 'JS, Java, Python' },
+  devops:                { icon: Database,      sub: 'CI/CD, Cloud, Infra' },
+  mobile:                { icon: Smartphone,    sub: 'iOS, Android, RN' },
+  AI_ML:                 { icon: Brain,         sub: 'Models & Pipelines' },
+  data_science:          { icon: BarChart2,     sub: 'Analytics & Insights' },
+  HR:                    { icon: Users,         sub: 'People & Culture' },
+  introduction:          { icon: User,          sub: 'Personal Background' }
 }
 
 const TYPE_META = {
@@ -65,9 +68,14 @@ const SPEC_META = {
   scikit_learn:   'ML library',
   nlp:            'Natural language',
   computer_vision:'Image & video AI',
-  python:         'Data language',
+  python:         'AI, Data & Backend',
+  javascript:     'Frontend & Node.js',
+  java:           'Enterprise & Android',
+  'C++':            'Systems & Game Dev',
+  ruby:           'Web & Scripting',
+  go:             'Cloud & Concurrency',
   spark:          'Big data processing',
-  hadoop:         'Distributed storage',
+  mongodb:        'NoSQL Database',
   sql:            'Structured queries',
   tableau:        'Data visualization',
   power_bi:       'BI & reporting',
@@ -272,10 +280,19 @@ export default function InterviewSetupPage() {
 
   const currentSpecs     = remoteConfig.roles[selectedRole] || null
   const hasSpecialization = currentSpecs !== null
+  const isSpecialRole     = selectedRole === 'hr' || selectedRole === 'introduction'
 
   function handleRoleChange(role) {
     setSelectedRole(role)
     setSelectedSpec(remoteConfig.roles[role]?.[0] || null)
+    
+    if (role === 'hr' || role === 'introduction') {
+      setSelectedType('hr')
+      setSelectedLevel('fresher')
+    } else if (selectedRole === 'hr' || selectedRole === 'introduction') {
+      setSelectedType(remoteConfig.interviewTypes[0])
+      setSelectedLevel(remoteConfig.levels[1] || remoteConfig.levels[0])
+    }
   }
 
   const summary = useMemo(() => {
@@ -286,11 +303,13 @@ export default function InterviewSetupPage() {
     if (hasSpecialization && selectedSpec) {
       rows['Specialization'] = prettySpec(selectedSpec)
     }
-    rows['Type']      = TYPE_META[selectedType]?.label || selectedType
-    rows['Level']     = LEVEL_META[selectedLevel]?.label || selectedLevel
+    if (!isSpecialRole) {
+      rows['Type']      = TYPE_META[selectedType]?.label || selectedType
+      rows['Level']     = LEVEL_META[selectedLevel]?.label || selectedLevel
+    }
     rows['Questions'] = `${selectedCount} Questions`
     return rows
-  }, [selectedRole, selectedSpec, selectedType, selectedLevel, selectedCount, hasSpecialization, bootstrapping])
+  }, [selectedRole, selectedSpec, selectedType, selectedLevel, selectedCount, hasSpecialization, isSpecialRole, bootstrapping])
 
   function startInterview() {
     setError(null)
@@ -315,6 +334,49 @@ export default function InterviewSetupPage() {
         setError(err.response?.data?.message || 'Failed to start interview. Please try again.')
       })
       .finally(() => setLoading(false))
+  }
+
+  async function handleUpgrade() {
+    try {
+      setLoading(true)
+      const token = localStorage.getItem('token')
+      const { data } = await paymentApi.createOrder(token)
+      const order = data.data
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: 'InterviewIQ Pro',
+        description: '30 Days Unlimited Practice',
+        order_id: order.id,
+        handler: async (response) => {
+          try {
+            toast.loading('Verifying payment...')
+            await paymentApi.verifyPayment(response, token)
+            await fetchUser?.() // Sync profile
+            toast.dismiss()
+            toast.success('Welcome to Pro! Practice unlimitedly now.')
+            setShowProPopup(false)
+          } catch (err) {
+            toast.dismiss()
+            toast.error('Payment verification failed. Please contact support.')
+          }
+        },
+        prefill: {
+          name: user?.name || '',
+          email: user?.email || '',
+        },
+        theme: { color: '#4F46E5' },
+      }
+
+      const rzp = new window.Razorpay(options)
+      rzp.open()
+    } catch (err) {
+      toast.error('Failed to initiate payment. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (bootstrapping) {
@@ -354,8 +416,12 @@ export default function InterviewSetupPage() {
               <p className="text-center text-slate-500 font-medium mb-10 leading-relaxed text-sm">
                 You've reached your daily Mock Interview limit. Upgrade to InterviewIQ Pro to practice without boundaries and receive deep algorithmic insights!
               </p>
-              <Button onClick={() => { setShowProPopup(false); alert('Razorpay integration coming soon!') }} className="w-full h-14 bg-slate-900 hover:bg-slate-800 text-white font-black tracking-widest text-[10px] uppercase shadow-xl shadow-slate-900/20 rounded-2xl transition-all hover:scale-105 active:scale-95">
-                 Upgrade to Pro — ₹999/mo
+              <Button 
+                onClick={handleUpgrade} 
+                disabled={loading}
+                className="w-full h-14 bg-slate-900 hover:bg-slate-800 text-white font-black tracking-widest text-[10px] uppercase shadow-xl shadow-slate-900/20 rounded-2xl transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+              >
+                 {loading ? <Loader2 className="animate-spin h-4 w-4" /> : 'Upgrade to Pro — ₹999/mo'}
               </Button>
             </motion.div>
           </motion.div>
@@ -412,39 +478,41 @@ export default function InterviewSetupPage() {
               </section>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <section>
-                <SectionHeader icon={TrendingUp} title="Interview Type" />
-                <RadioList
-                  options={remoteConfig.interviewTypes}
-                  selected={selectedType}
-                  onSelect={setSelectedType}
-                  renderLabel={t => (
-                    <span className="flex flex-col items-start gap-0.5">
-                      <span>{TYPE_META[t]?.label || prettyRole(t)}</span>
-                      <span className="text-xs text-muted-foreground font-normal">{TYPE_META[t]?.desc || 'Standard session'}</span>
-                    </span>
-                  )}
-                />
-              </section>
-
-              <section>
-                <SectionHeader icon={Brain} title="Difficulty Level" />
-                <RadioList
-                  options={remoteConfig.levels}
-                  selected={selectedLevel}
-                  onSelect={setSelectedLevel}
-                  renderLabel={l => (
-                    <span className="flex items-center gap-2">
-                      {LEVEL_META[l]?.label || prettyRole(l)}
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
-                        {LEVEL_META[l]?.badge || 'Standard'}
+            {!isSpecialRole && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-2 duration-500">
+                <section>
+                  <SectionHeader icon={TrendingUp} title="Interview Type" />
+                  <RadioList
+                    options={remoteConfig.interviewTypes}
+                    selected={selectedType}
+                    onSelect={setSelectedType}
+                    renderLabel={t => (
+                      <span className="flex flex-col items-start gap-0.5">
+                        <span>{TYPE_META[t]?.label || prettyRole(t)}</span>
+                        <span className="text-xs text-muted-foreground font-normal">{TYPE_META[t]?.desc || 'Standard session'}</span>
                       </span>
-                    </span>
-                  )}
-                />
-              </section>
-            </div>
+                    )}
+                  />
+                </section>
+
+                <section>
+                  <SectionHeader icon={Brain} title="Difficulty Level" />
+                  <RadioList
+                    options={remoteConfig.levels}
+                    selected={selectedLevel}
+                    onSelect={setSelectedLevel}
+                    renderLabel={l => (
+                      <span className="flex items-center gap-2">
+                        {LEVEL_META[l]?.label || prettyRole(l)}
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                          {LEVEL_META[l]?.badge || 'Standard'}
+                        </span>
+                      </span>
+                    )}
+                  />
+                </section>
+              </div>
+            )}
 
             <section>
               <SectionHeader icon={AlignLeft} title="Question Quantity" />

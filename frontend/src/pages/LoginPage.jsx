@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Sparkles } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import Header from '../components/landing/Header'
 import Footer from '../components/landing/Footer'
 import { Button } from '../components/ui/Button'
@@ -61,6 +62,8 @@ export default function LoginPage() {
         callback: async (resp) => {
           const idToken = resp?.credential
           if (!idToken) return
+          setLoading(true)
+          setError('')
           try {
             const { data } = await authApi.googleAuth(idToken)
             const { token, data: payload } = data
@@ -68,6 +71,7 @@ export default function LoginPage() {
             navigate('/dashboard')
           } catch (err) {
             setError(err.response?.data?.message || 'Google sign-in failed')
+            setLoading(false)
           }
         }
       })
@@ -95,7 +99,27 @@ export default function LoginPage() {
 
       <main className="flex-1 flex items-center justify-center py-12 px-4">
         <div className="w-full max-w-md mx-auto">
-          <div className="rounded-3xl border border-gray-200 bg-white/80 backdrop-blur-xl p-10 shadow-2xl shadow-gray-400/20 mb-20">
+          <div className="relative rounded-3xl border border-gray-200 bg-white/80 backdrop-blur-xl p-10 shadow-2xl shadow-gray-400/20 mb-20 overflow-hidden">
+            <AnimatePresence>
+              {loading && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/60 backdrop-blur-sm"
+                >
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="relative">
+                      <div className="h-12 w-12 rounded-full border-4 border-accent/20 border-t-accent animate-spin" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Sparkles className="h-5 w-5 text-accent animate-pulse" />
+                      </div>
+                    </div>
+                    <p className="text-sm font-bold text-gray-900 uppercase tracking-widest animate-pulse">Authenticating...</p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <div className="text-center mb-8">
               <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>

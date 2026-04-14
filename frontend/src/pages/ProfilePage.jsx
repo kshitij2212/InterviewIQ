@@ -3,19 +3,26 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { User, Mail, Edit2, Check, Loader2, Shield, Calendar, Award, Zap } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { paymentApi } from '../api/payment'
+import { toast } from 'react-hot-toast'
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, updateName } = useAuthStore()
+  const { user, isAuthenticated, updateName, fetchUser } = useAuthStore()
   const navigate = useNavigate()
 
   const [editingName, setEditingName] = useState(false)
   const [tempName, setTempName]       = useState('')
   const [saving, setSaving]           = useState(false)
   const [saved, setSaved]             = useState(false)
+  const [upgrading, setUpgrading]     = useState(false)
 
   useEffect(() => {
-    if (!isAuthenticated) navigate('/')
-  }, [isAuthenticated, navigate])
+    if (!isAuthenticated) {
+      navigate('/')
+    } else {
+      fetchUser?.()
+    }
+  }, [isAuthenticated, navigate, fetchUser])
 
   const initials = user?.name
     ? user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
@@ -37,35 +44,77 @@ export default function ProfilePage() {
     setTimeout(() => setSaved(false), 2500)
   }
 
+  const handleUpgrade = async () => {
+    try {
+      setUpgrading(true)
+      const token = localStorage.getItem('token')
+      const { data } = await paymentApi.createOrder(token)
+      const order = data.data
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: 'InterviewIQ Pro',
+        description: '30 Days Unlimited Practice',
+        order_id: order.id,
+        handler: async (response) => {
+          try {
+            toast.loading('Verifying payment...')
+            await paymentApi.verifyPayment(response, token)
+            await fetchUser?.() // Sync profile
+            toast.dismiss()
+            toast.success('Welcome to Pro! Practice unlimitedly now.')
+          } catch (err) {
+            toast.dismiss()
+            toast.error('Payment verification failed. Please contact support.')
+          }
+        },
+        prefill: {
+          name: user?.name || '',
+          email: user?.email || '',
+        },
+        theme: { color: '#4F46E5' },
+      }
+
+      const rzp = new window.Razorpay(options)
+      rzp.open()
+    } catch (err) {
+      toast.error('Failed to initiate payment. Please try again.')
+    } finally {
+      setUpgrading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background px-6 py-10 lg:py-16">
       <div className="max-w-4xl mx-auto">
         
-        <div className="mb-10 text-center md:text-left">
-          <h1 className="text-4xl lg:text-5xl font-black tracking-tighter text-slate-900 uppercase">
+        <div className="mb-8">
+          <h1 className="text-2xl lg:text-3xl font-black tracking-tighter text-slate-900 uppercase">
             Profile <span className="text-accent">Settings</span>
           </h1>
-          <p className="text-muted-foreground font-medium mt-2">Manage your identity and authentication details</p>
+          <p className="text-sm text-muted-foreground font-medium mt-1">Manage your identity and authentication details</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-8">
           
           <div className="bg-white rounded-3xl border border-slate-200/60 p-8 lg:p-10 shadow-xl shadow-slate-200/20">
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8 mb-12 pb-10 border-b border-slate-100">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-8">
               
               <div className="relative group">
-                <div className="h-28 w-28 rounded-3xl overflow-hidden border-4 border-accent/10 shadow-2xl shadow-accent/10 shrink-0 bg-white">
+                <div className="h-16 w-16 rounded-2xl overflow-hidden border-2 border-accent/10 shadow-xl shadow-accent/5 shrink-0 bg-white">
                   {user?.avatar ? (
                     <img src={user.avatar} alt={user.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
                   ) : (
-                    <div className="h-full w-full bg-gradient-to-br from-indigo-50 to-indigo-100/50 text-indigo-700 flex items-center justify-center font-black text-4xl uppercase tracking-tighter">
+                    <div className="h-full w-full bg-gradient-to-br from-indigo-50 to-indigo-100/50 text-indigo-700 flex items-center justify-center font-black text-2xl uppercase tracking-tighter">
                       {initials}
                     </div>
                   )}
                 </div>
-                <div className="absolute -inset-2 rounded-[2rem] border border-accent/20 -z-10 transition-transform duration-500 blur-sm group-hover:scale-105 opacity-0 group-hover:opacity-100"></div>
-                <div className="absolute -bottom-2 -right-2 h-8 w-8 rounded-xl bg-emerald-500 border-4 border-white flex items-center justify-center shadow-lg" title="Active Status">
-                  <Check size={12} className="text-white font-black" />
+                <div className="absolute -inset-2 rounded-2xl border border-accent/20 -z-10 transition-transform duration-500 blur-sm group-hover:scale-105 opacity-0 group-hover:opacity-100"></div>
+                <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-lg bg-emerald-500 border-2 border-white flex items-center justify-center shadow-lg" title="Active Status">
+                  <Check size={10} className="text-white font-black" />
                 </div>
               </div>
 
@@ -85,14 +134,13 @@ export default function ProfilePage() {
                         value={tempName}
                         onChange={e => setTempName(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setEditingName(false) }}
-                        className="bg-slate-50 border-2 border-accent/30 rounded-xl px-4 py-3 text-2xl font-black text-slate-900 focus:outline-none focus:ring-4 focus:ring-accent/10 focus:border-accent w-full sm:w-64 transition-all"
+                        className="bg-slate-50 border-2 border-accent/30 rounded-lg px-3 py-1.5 text-base font-black text-slate-900 focus:outline-none focus:ring-4 focus:ring-accent/10 focus:border-accent w-full sm:w-64 transition-all"
                       />
                       <div className="flex gap-2 w-full sm:w-auto">
-                        <button onClick={handleSave} disabled={saving} className="flex-1 sm:flex-none h-12 px-6 rounded-xl bg-accent text-white font-black text-xs uppercase tracking-widest hover:bg-accent/90 transition-all shadow-lg shadow-accent/20 active:scale-95 flex items-center justify-center">
-                          {saving ? <Loader2 size={16} className="animate-spin" /> : 'Save'}
+                        <button onClick={handleSave} disabled={saving} className="flex-1 sm:flex-none h-10 px-4 rounded-lg bg-accent text-white font-black text-[10px] uppercase tracking-widest hover:bg-accent/90 transition-all shadow-lg shadow-accent/20 active:scale-95 flex items-center justify-center">
+                          {saving ? <Loader2 size={14} className="animate-spin" /> : 'Save'}
                         </button>
-                        <button onClick={() => setEditingName(false)} className="h-12 w-12 rounded-xl bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-all flex items-center justify-center">
-                          <Edit2 size={16} className="rotate-45 opacity-0 absolute" /> 
+                        <button onClick={() => setEditingName(false)} className="h-10 w-10 rounded-lg bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-all flex items-center justify-center">
                           <span className="font-bold text-lg leading-none">×</span>
                         </button>
                       </div>
@@ -104,14 +152,14 @@ export default function ProfilePage() {
                       animate={{ opacity: 1, y: 0 }}
                       className="flex flex-col sm:flex-row items-center gap-4"
                     >
-                      <h2 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tighter truncate max-w-full">
+                      <h2 className="text-base lg:text-lg font-black text-slate-900 tracking-tighter truncate max-w-full">
                         {user?.name || 'User'}
                       </h2>
                       <button 
                         onClick={startEdit} 
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-black uppercase tracking-widest text-slate-400 hover:bg-accent hover:text-white hover:border-accent transition-all shadow-sm active:scale-95 shrink-0"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:bg-accent hover:text-white hover:border-accent transition-all shadow-sm active:scale-95 shrink-0"
                       >
-                        <Edit2 size={12} /> Edit
+                        <Edit2 size={10} /> Edit
                       </button>
                     </motion.div>
                   )}
@@ -140,10 +188,10 @@ export default function ProfilePage() {
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Authentication Method</p>
                   <div className="flex items-center gap-2">
-                    <p className="text-base font-bold text-slate-800 capitalize">
-                      {user?.googleId ? 'Google Workspace' : 'Email & Password'}
+                    <p className="text-sm font-bold text-slate-800 capitalize">
+                      {user?.googleId ? 'Google Account' : 'Email & Password'}
                     </p>
-                    {user?.googleId && <span className="bg-emerald-100 text-emerald-700 text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Verified</span>}
+                    {user?.googleId && <span className="bg-emerald-100 text-emerald-700 text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Verified Secure</span>}
                   </div>
                 </div>
               </div>
@@ -154,8 +202,8 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Member Since</p>
-                  <p className="text-base font-bold text-slate-800">
-                    {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}
+                  <p className="text-sm font-bold text-slate-800">
+                    {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Join Date unavailable'}
                   </p>
                 </div>
               </div>
@@ -174,8 +222,12 @@ export default function ProfilePage() {
                 </div>
                 
                 {user?.planType !== 'pro' && (
-                  <button onClick={() => navigate('/interview/setup')} className="w-full bg-white text-indigo-900 font-black text-xs uppercase tracking-widest py-3 rounded-xl hover:bg-indigo-50 transition-colors shadow-lg">
-                    Upgrade to Pro
+                  <button 
+                    onClick={handleUpgrade} 
+                    disabled={upgrading}
+                    className="w-full bg-white text-indigo-900 font-black text-xs uppercase tracking-widest py-3 rounded-xl hover:bg-indigo-50 transition-colors shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {upgrading ? <Loader2 size={14} className="animate-spin" /> : 'Upgrade to Pro'}
                   </button>
                 )}
                 {user?.planType === 'pro' && (

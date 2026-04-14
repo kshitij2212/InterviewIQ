@@ -75,7 +75,7 @@ export default function DashboardPage() {
         const today = new Date().setHours(0,0,0,0)
         const countToday = fetchedInterviews.filter(i => new Date(i.createdAt).getTime() > today).length
         
-        if (countToday > 0 && countToday < DAILY_GOAL) {
+        if (countToday > 0 && countToday < DAILY_GOAL && user?.planType !== 'pro') {
             setTimeout(() => setShowGoalPopup(true), 1500)
         }
       } catch (err) {
