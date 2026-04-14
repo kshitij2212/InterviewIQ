@@ -7,8 +7,6 @@ import {
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { interviewApi } from '../api/interview'
-import Header from '../components/landing/Header'
-import Footer from '../components/landing/Footer'
 import { Button } from '../components/ui/Button'
 import { useAuthStore } from '../store/authStore'
 
@@ -250,7 +248,7 @@ export default function InterviewSetupPage() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/login')
+      navigate('/')
       return
     }
 
@@ -344,7 +342,7 @@ export default function InterviewSetupPage() {
               initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
-              className="bg-white max-w-md w-full rounded-[2.5rem] p-10 shadow-2xl relative border border-slate-100"
+              className="bg-white max-w-md w-full rounded-2xl p-10 shadow-2xl relative border border-slate-100"
             >
               <button onClick={() => setShowProPopup(false)} className="absolute top-6 right-6 text-slate-300 hover:text-slate-500 transition-colors">
                  <X className="w-6 h-6" />
@@ -363,8 +361,6 @@ export default function InterviewSetupPage() {
           </motion.div>
         )}
       </AnimatePresence>
-      <Header />
-      <div className="h-16" />
 
       <div className="mx-auto max-w-6xl px-6 py-12">
 
@@ -473,7 +469,7 @@ export default function InterviewSetupPage() {
 
           </div>
 
-          <div className="space-y-6 lg:sticky lg:top-24">
+          <div className="space-y-6 lg:sticky lg:top-24 max-h-[calc(100vh-120px)] overflow-y-auto pr-2 custom-scrollbar">
 
             <div className="rounded-2xl overflow-hidden border border-border shadow-xl shadow-accent/5">
               <div className="bg-accent px-6 py-6">
@@ -545,8 +541,6 @@ export default function InterviewSetupPage() {
           </div>
         </div>
       </div>
-
-      <Footer />
     </div>
   )
 }

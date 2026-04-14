@@ -13,12 +13,12 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background text-foreground">
       <Header />
       <Hero />
-      <Stats />
-      <Features />
       <HowItWorks />
-      <Testimonials />
+      <Features />
       <Pricing />
+      <Testimonials />
       <CTA />
+      <Stats />
       <Footer />
     </div>
   )

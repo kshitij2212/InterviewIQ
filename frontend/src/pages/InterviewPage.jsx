@@ -37,7 +37,7 @@ export default function InterviewPage() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/login')
+      navigate('/')
       return
     }
     refreshSessionState()
@@ -195,6 +195,24 @@ export default function InterviewPage() {
     }
   }
 
+  const handleEndSession = async () => {
+    try {
+      setAnalyzing(true)
+      await interviewApi.submitAnswer(id, {
+        transcript: transcript,
+        duration: QUESTION_TIME_LIMIT - timeLeft,
+        status: transcript ? 'submitted' : 'skipped'
+      })
+      await interviewApi.complete(id)
+      navigate(`/interview/${id}/results`)
+    } catch (err) {
+      console.error(err)
+      navigate('/dashboard')
+    } finally {
+      setAnalyzing(false)
+    }
+  }
+
   if (bootstrapping) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -220,7 +238,7 @@ export default function InterviewPage() {
                <Button 
                 size="sm"
                 className="bg-red-500 hover:bg-red-600 text-white font-bold h-10 px-8 rounded-lg uppercase tracking-widest text-[10px] shadow-lg shadow-red-500/20"
-                onClick={() => navigate('/dashboard')}
+                onClick={handleEndSession}
                >
                  End Session
                </Button>
@@ -262,8 +280,8 @@ export default function InterviewPage() {
 
         </div>
 
-        <aside className="hidden lg:flex flex-col gap-6">
-          <div className="bg-card rounded-2xl p-8 border border-border shadow-sm">
+        <aside className="hidden lg:flex flex-col gap-6 sticky top-24 self-start max-h-[calc(100vh-120px)]">
+          <div className="bg-card rounded-2xl p-8 border border-border shadow-sm shrink-0">
             <h3 className="font-black text-[10px] tracking-widest uppercase text-muted-foreground mb-6">Session Completion</h3>
             <div className="flex items-baseline gap-2 mb-6">
               <span className="text-4xl font-black text-foreground tracking-tighter">{(currentQuestion?.index || 0) + 1}</span>
@@ -278,9 +296,9 @@ export default function InterviewPage() {
             </div>
           </div>
 
-          <div className="bg-card rounded-2xl p-8 border border-border shadow-sm flex flex-col flex-1">
-             <h3 className="font-black text-[10px] tracking-widest text-accent mb-8 uppercase">Session Timeline</h3>
-             <div className="space-y-8 relative after:absolute after:top-0 after:bottom-0 after:left-[9px] after:w-px after:bg-border">
+          <div className="bg-card rounded-2xl p-8 border border-border shadow-sm flex flex-col min-h-0 overflow-hidden">
+             <h3 className="font-black text-[10px] tracking-widest text-accent mb-8 uppercase shrink-0">Session Timeline</h3>
+             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-8 relative after:absolute after:top-0 after:bottom-0 after:left-[9px] after:w-px after:bg-border">
                {interview.questionIds.map((qId, i) => {
                  const answer = answers.find(a => {
                    const aId = typeof a.questionId === 'object' ? a.questionId._id : a.questionId
