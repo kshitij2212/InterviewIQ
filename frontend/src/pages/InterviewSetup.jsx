@@ -4,7 +4,7 @@ import {
   Code2, Database, Layers, Server, Smartphone,
   Brain, BarChart2, Users, MessageSquare, User, AlertCircle, X,
   TrendingUp, AlignLeft, ArrowRight, Lightbulb, ChevronRight, Home, Loader2, Sparkles,
-  Coffee, Cpu, Binary, Braces
+  Coffee, Cpu, Binary, Braces, Lock
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { interviewApi } from '../api/interview'
@@ -18,12 +18,12 @@ const ROLE_META = {
   frontend:              { icon: Code2,         sub: 'React, Vue, Angular' },
   backend:               { icon: Server,        sub: 'Node, Django, Spring' },
   coding_languages:      { icon: Braces,        sub: 'JS, Java, Python' },
+  data_science:          { icon: BarChart2,     sub: 'Analytics & Insights' },
+  HR:                    { icon: Users,         sub: 'People & Culture' },
+  introduction:          { icon: User,          sub: 'Personal Background' },
   devops:                { icon: Database,      sub: 'CI/CD, Cloud, Infra' },
   mobile:                { icon: Smartphone,    sub: 'iOS, Android, RN' },
   AI_ML:                 { icon: Brain,         sub: 'Models & Pipelines' },
-  data_science:          { icon: BarChart2,     sub: 'Analytics & Insights' },
-  HR:                    { icon: Users,         sub: 'People & Culture' },
-  introduction:          { icon: User,          sub: 'Personal Background' }
 }
 
 const TYPE_META = {
@@ -37,7 +37,7 @@ const LEVEL_META = {
   senior:  { label: 'Senior',  badge: '3+ yr'  },
 }
 
-const ESTIMATED_TIMES = { 3: 5, 5: 10, 8: 15 }
+const ESTIMATED_TIMES = { 3: 5, 5: 10, 10: 20 }
 
 const SPEC_META = {
   react:          'Frontend library',
@@ -134,10 +134,13 @@ function SectionHeader({ icon: Icon, title }) {
   )
 }
 
-function RoleCard({ roleId, selected, onSelect }) {
-  const meta   = ROLE_META[roleId] || { icon: Brain, sub: 'Specialized Role' }
-  const Icon   = meta.icon
-  const active = selected === roleId
+function RoleCard({ roleId, selected, onSelect, isPro }) {
+  const PRO_ROLES = ['devops', 'mobile', 'AI_ML']
+  const meta      = ROLE_META[roleId] || { icon: Brain, sub: 'Specialized Role' }
+  const Icon      = meta.icon
+  const active    = selected === roleId
+  const isLocked  = PRO_ROLES.includes(roleId) && !isPro
+
   return (
     <button
       onClick={() => onSelect(roleId)}
@@ -146,6 +149,7 @@ function RoleCard({ roleId, selected, onSelect }) {
         ${active
           ? 'border-accent bg-accent/5 shadow-sm'
           : 'border-border bg-white hover:border-accent/40 hover:bg-accent/5'}
+        ${isLocked ? 'border-dashed opacity-75' : ''}
       `}
     >
       {active && (
@@ -155,12 +159,22 @@ function RoleCard({ roleId, selected, onSelect }) {
           </svg>
         </div>
       )}
+      {!active && isLocked && (
+        <div className="absolute top-2.5 right-2.5 flex h-5 w-5 items-center justify-center rounded-lg bg-slate-50 border border-slate-200 shadow-sm">
+          <Lock size={10} className="text-slate-400" />
+        </div>
+      )}
       <div className={`mb-2.5 flex h-8 w-8 items-center justify-center rounded-lg ${active ? 'bg-accent/10' : 'bg-muted'}`}>
         <Icon size={16} className={active ? 'text-accent' : 'text-muted-foreground'} />
       </div>
-      <p className={`text-sm font-semibold leading-tight ${active ? 'text-foreground' : 'text-foreground/80'}`}>
-        {prettyRole(roleId)}
-      </p>
+      <div className="flex items-center gap-1.5 ">
+        <p className={`text-sm font-semibold leading-tight ${active ? 'text-foreground' : 'text-foreground/80'}`}>
+          {prettyRole(roleId)}
+        </p>
+        {!active && isLocked && (
+           <span className="text-[9px] font-black uppercase text-accent bg-accent/5 px-2 py-0.5 rounded leading-none tracking-tighter">Pro Only</span>
+        )}
+      </div>
       <p className={`text-xs mt-0.5 ${active ? 'text-accent/70' : 'text-muted-foreground'}`}>{meta.sub}</p>
     </button>
   )
@@ -195,11 +209,12 @@ function SpecCard({ specId, selected, onSelect }) {
   )
 }
 
-function RadioList({ options, selected, onSelect, renderLabel }) {
+function RadioList({ options, selected, onSelect, renderLabel, lockCondition }) {
   return (
     <div className="space-y-2">
       {options.map(opt => {
         const active = selected === opt
+        const isLocked = lockCondition?.(opt)
         return (
           <button
             key={opt}
@@ -209,9 +224,13 @@ function RadioList({ options, selected, onSelect, renderLabel }) {
               ${active
                 ? 'border-accent bg-white text-foreground'
                 : 'border-border bg-white text-muted-foreground hover:border-accent/40'}
+              ${isLocked ? 'opacity-70 cursor-pointer border-dashed' : ''}
             `}
           >
-            <span>{renderLabel ? renderLabel(opt) : opt}</span>
+            <div className="flex items-center gap-3">
+              <span>{renderLabel ? renderLabel(opt) : opt}</span>
+              {isLocked && <Lock size={12} className="text-slate-400" />}
+            </div>
             <div className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 transition-all ${active ? 'border-accent' : 'border-border'}`}>
               {active && <div className="h-2.5 w-2.5 rounded-full bg-accent" />}
             </div>
@@ -233,7 +252,7 @@ function SummaryRow({ label, value }) {
 
 export default function InterviewSetupPage() {
   const navigate = useNavigate()
-  const { isAuthenticated } = useAuthStore()
+  const { user, isAuthenticated, fetchUser } = useAuthStore()
 
   const [bootstrapping, setBootstrapping] = useState(true)
   const [loading, setLoading] = useState(false)
@@ -283,6 +302,12 @@ export default function InterviewSetupPage() {
   const isSpecialRole     = selectedRole === 'hr' || selectedRole === 'introduction'
 
   function handleRoleChange(role) {
+    const PRO_ROLES = ['devops', 'mobile', 'AI_ML']
+    if (PRO_ROLES.includes(role) && user?.planType !== 'pro') {
+      setShowProPopup(true)
+      return
+    }
+    
     setSelectedRole(role)
     setSelectedSpec(remoteConfig.roles[role]?.[0] || null)
     
@@ -414,7 +439,7 @@ export default function InterviewSetupPage() {
               </div>
               <h3 className="text-2xl font-black text-center tracking-tighter text-slate-900 mb-4 px-4 uppercase">Unlock Unlimited Potential</h3>
               <p className="text-center text-slate-500 font-medium mb-10 leading-relaxed text-sm">
-                You've reached your daily Mock Interview limit. Upgrade to InterviewIQ Pro to practice without boundaries and receive deep algorithmic insights!
+                Upgrade to InterviewIQ Pro to practice without boundaries and receive deep algorithmic insights!
               </p>
               <Button 
                 onClick={handleUpgrade} 
@@ -461,8 +486,14 @@ export default function InterviewSetupPage() {
             <section>
               <SectionHeader icon={Layers} title="Target Role" />
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {Object.keys(remoteConfig.roles).map(r => (
-                  <RoleCard key={r} roleId={r} selected={selectedRole} onSelect={handleRoleChange} />
+                {Object.keys(remoteConfig.roles).map(roleId => (
+                  <RoleCard
+                    key={roleId}
+                    roleId={roleId}
+                    selected={selectedRole}
+                    onSelect={handleRoleChange}
+                    isPro={user?.planType === 'pro'}
+                  />
                 ))}
               </div>
             </section>
@@ -500,13 +531,23 @@ export default function InterviewSetupPage() {
                   <RadioList
                     options={remoteConfig.levels}
                     selected={selectedLevel}
-                    onSelect={setSelectedLevel}
+                    onSelect={(l) => {
+                      if (l === 'senior' && user?.planType !== 'pro') {
+                        setShowProPopup(true)
+                      } else {
+                        setSelectedLevel(l)
+                      }
+                    }}
+                    lockCondition={(l) => l === 'senior' && user?.planType !== 'pro'}
                     renderLabel={l => (
                       <span className="flex items-center gap-2">
                         {LEVEL_META[l]?.label || prettyRole(l)}
                         <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
                           {LEVEL_META[l]?.badge || 'Standard'}
                         </span>
+                        {l === 'senior' && user?.planType !== 'pro' && (
+                          <span className="text-[9px] font-black uppercase text-accent ml-1 tracking-tighter bg-accent/5 px-2 py-0.5 rounded">PRO ONLY</span>
+                        )}
                       </span>
                     )}
                   />
@@ -517,21 +558,41 @@ export default function InterviewSetupPage() {
             <section>
               <SectionHeader icon={AlignLeft} title="Question Quantity" />
               <div className="flex gap-4">
-                {remoteConfig.questionOptions.map(n => (
-                  <button
-                    key={n}
-                    onClick={() => setSelectedCount(n)}
-                    className={`
-                      flex flex-col items-center flex-1 rounded-xl border-2 px-8 py-5 transition-all
-                      ${selectedCount === n
-                        ? 'border-accent bg-white text-accent shadow-sm'
-                        : 'border-border bg-white text-muted-foreground hover:border-accent/40'}
-                    `}
-                  >
-                    <span className="text-2xl font-bold">{n}</span>
-                    <span className="text-[10px] text-muted-foreground mt-0.5">~{ESTIMATED_TIMES[n] || (n * 4)} min</span>
-                  </button>
-                ))}
+                {remoteConfig.questionOptions.map(n => {
+                  const active = selectedCount === n
+                  const isLocked = n === 10 && user?.planType !== 'pro'
+                  return (
+                    <button
+                      key={n}
+                      onClick={() => {
+                        if (isLocked) setShowProPopup(true)
+                        else setSelectedCount(n)
+                      }}
+                      className={`
+                        flex flex-col items-center justify-center flex-1 rounded-2xl border-2 py-3.5 transition-all
+                        ${active
+                          ? 'border-accent bg-white shadow-sm ring-1 ring-accent/10'
+                          : 'border-slate-100 bg-white text-slate-400 hover:border-accent/40 hover:bg-slate-50/50'}
+                        ${isLocked ? 'border-dashed opacity-80' : ''}
+                      `}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className={`text-2xl font-black tracking-tighter ${active ? 'text-accent' : 'text-slate-600'}`}>
+                          {n}
+                        </span>
+                        {isLocked && <Lock size={12} className="text-slate-300" />}
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <span className="text-[10px] font-bold text-slate-400">
+                          ~{ESTIMATED_TIMES[n] || 0} min
+                        </span>
+                        {isLocked && (
+                          <span className="text-[9px] font-black uppercase text-accent mt-1 bg-accent/5 px-2 py-0.5 rounded leading-none tracking-tighter">PRO ONLY</span>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
             </section>
 

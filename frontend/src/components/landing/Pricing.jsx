@@ -8,14 +8,14 @@ const plans = [
     name: 'Pro',
     price: '₹999',
     description: 'Best for serious job seekers',
-    features: ['Unlimited AI interviews', 'Detailed feedback & analytics', 'Full question bank', 'System design practice', 'Priority support'],
+    features: ['Unlimited AI interviews', 'Advanced Domains (DevOps, Mobile, AI/ML)', 'Advanced Senior-level Challenges', 'Intense 10-Question Sessions', 'Priority support'],
     popular: false,
   },
   {
     name: 'Starter',
     price: '₹0',
     description: 'Perfect for exploring the platform',
-    features: ['3 AI mock interviews/day', 'Basic feedback', 'Limited question bank', 'Community access', '100+ Interview Questions'],
+    features: ['3 Interviews (Fresher/Junior only)', 'Basic feedback', 'Limited question bank', 'Community access', '100+ Interview Questions'],
     popular: true,
   },
   {

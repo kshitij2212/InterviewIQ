@@ -185,6 +185,11 @@ export default function DashboardPage() {
                    )}
                 </div>
                 <div>
+                  <div className="mb-2">
+                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded tracking-tighter ${user?.planType === 'pro' ? 'bg-accent/10 text-accent border border-accent/20' : 'bg-slate-100 text-slate-500 border border-slate-200'}`}>
+                      {user?.planType === 'pro' ? 'PRO MEMBER' : 'FREE ACCOUNT'}
+                    </span>
+                  </div>
                   <h1 className="text-3xl font-black tracking-tighter text-slate-900 uppercase">
                     {getGreeting()}, <span className="text-accent">{firstName}</span>
                   </h1>
