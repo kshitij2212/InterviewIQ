@@ -8,7 +8,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 
 const NAV_ITEMS = [
   { label: 'Dashboard', to: '/dashboard' },
-  { label: 'Interviews', to: '/interview/setup' },
+  { label: 'Interview', to: '/interview/setup' },
   { label: 'Resources', to: '/resources' },
   { label: 'Settings', to: '/settings' },
 ]
@@ -81,7 +81,7 @@ export default function Header() {
     const map = {
       '': 'Dashboard',
       dashboard: 'Dashboard',
-      interviews: 'Interviews',
+      interview: 'Interview',
       resources: 'Resources',
       settings: 'Settings',
     }
