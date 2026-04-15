@@ -8,7 +8,7 @@ const plans = [
     name: 'Pro',
     price: '₹999',
     description: 'Best for serious job seekers',
-    features: ['Unlimited AI interviews', 'Advanced Domains (DevOps, Mobile, AI/ML)', 'Advanced Senior-level Challenges', 'Intense 10-Question Sessions', 'Priority support'],
+    features: ['Unlimited AI interviews', 'Advanced Domains', 'Advanced Senior-level Challenges', 'Upto 10-Question Sessions', 'Priority support'],
     popular: false,
   },
   {

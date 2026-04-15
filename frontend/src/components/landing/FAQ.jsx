@@ -10,32 +10,32 @@ function cn(...inputs) {
 
 const faqs = [
   {
-    question: "Is InterviewIQ suitable for beginners?",
-    answer: "Yes. You can start with entry-level interviews, and the system will generate questions based on your selected role, level, and specialization. As you improve, you can switch to higher difficulty levels."
+    question: "What technology stack powers InterviewIQ?",
+    answer: "InterviewIQ is built using a modern stack: React with Vite for a lightning-fast frontend, Node.js and Express for the robust backend, and MongoDB for scalable data management. Our AI features are powered by state-of-the-art Large Language Models via the Groq SDK."
   },
   {
-    question: "How does the interview system work?",
-    answer: "Once you start an interview, a set of questions is generated based on your role and level. You answer them one by one, and each response is evaluated instantly with a score and detailed feedback."
+    question: "How does the AI evaluate my technical responses?",
+    answer: "Our system analyzes your answers for technical accuracy, key terminology, and conceptual depth. It compares your response against industry benchmarks and provides a score along with a suggested 'Ideal Answer' to help you bridge knowledge gaps."
   },
   {
-    question: "How accurate is the AI feedback?",
-    answer: "The AI evaluates your answers based on expected keywords, content quality, and communication. It provides strengths, improvement areas, and a breakdown score so you know exactly where to improve."
+    question: "Does InterviewIQ support specialized technical roles?",
+    answer: "Yes, you can practice for specific roles including Frontend, Backend, Fullstack, AI/ML, DevOps, and Mobile Development. Each track features specialized questions that reflect current industry standards."
   },
   {
-    question: "Can I skip questions or submit later?",
-    answer: "Yes. You can skip questions or submit incomplete answers. However, only submitted answers are considered for scoring and final feedback."
+    question: "Can I practice System Design interviews?",
+    answer: "Absolutely, we have dedicated System Design modules where the AI challenges you with scaling, high availability, and architectural trade-off questions specifically tailored for senior-level candidates."
   },
   {
-    question: "What happens after I complete an interview?",
-    answer: "You get an overall score along with combined feedback from all your answers, including key strengths and areas to improve."
+    question: "How does the Text-to-Speech (TTS) feature enhance practice?",
+    answer: "To simulate a real interview environment, our integrated TTS feature allows the AI to 'speak' questions to you. You can adjust the playback speed and voice settings to match your comfort level, making the session more immersive."
   },
   {
-    question: "Are there different types of interviews available?",
-    answer: "Yes! You can choose between Technical (Coding & System Design) and HR (Behavioral & Culture Fit) interviews. You can further tailor sessions by selecting your target role (e.g., Frontend, Backend, AI/ML) and difficulty level (Fresher, Junior, or Senior)."
+    question: "Is my session data and interview history secure?",
+    answer: "Data privacy is our priority. Your interview sessions and profile data are encrypted and stored securely. We use industry-standard security protocols to ensure your practice remains private and accessible only to you."
   },
   {
-    question: "Can I review my past interview sessions?",
-    answer: "Absolutely. All your completed mock interviews—including the questions, your answers, and the detailed AI feedback—are saved in your history so you can track your progress over time."
+    question: "How often is the interview content updated?",
+    answer: "Our question engine is dynamic and context-aware. Instead of a static bank, it generates questions based on real-time industry trends and the specific role and level you select, ensuring you're always practicing with relevant material."
   }
 ];
 
