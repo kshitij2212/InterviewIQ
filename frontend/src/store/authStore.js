@@ -23,7 +23,7 @@ export const useAuthStore = create(
                     const token = localStorage.getItem('token');
                     if (!token) return;
 
-                    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api/v1'}/auth/me`, {
+                    const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1'}/auth/me`, {
                         headers: {
                             'Authorization': `Bearer ${token}`
                         }
@@ -46,7 +46,7 @@ export const useAuthStore = create(
                     const token = localStorage.getItem('token');
                     if (!token) return;
 
-                    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api/v1'}/auth/me`, {
+                    const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1'}/auth/me`, {
                         method: 'PUT',
                         headers: {
                             'Authorization': `Bearer ${token}`,
