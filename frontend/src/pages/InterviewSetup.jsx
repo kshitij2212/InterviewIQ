@@ -379,7 +379,7 @@ export default function InterviewSetupPage() {
           try {
             toast.loading('Verifying payment...')
             await paymentApi.verifyPayment(response, token)
-            await fetchUser?.() // Sync profile
+            await fetchUser?.()
             toast.dismiss()
             toast.success('Welcome to Pro! Practice unlimitedly now.')
             setShowProPopup(false)

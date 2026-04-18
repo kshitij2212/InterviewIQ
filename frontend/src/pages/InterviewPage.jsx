@@ -37,31 +37,55 @@ export default function InterviewPage() {
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
   const autoSubmitPendingRef = useRef(false)
+  const utteranceRef = useRef(null)
+  const voicesRef = useRef([])
+
+  useEffect(() => {
+    const loadVoices = () => {
+      const v = window.speechSynthesis.getVoices()
+      if (v.length > 0) voicesRef.current = v
+    }
+    loadVoices()
+    if (window.speechSynthesis.addEventListener) {
+      window.speechSynthesis.addEventListener('voiceschanged', loadVoices)
+    }
+    return () => {
+      if (window.speechSynthesis.removeEventListener) {
+        window.speechSynthesis.removeEventListener('voiceschanged', loadVoices)
+      }
+    }
+  }, [])
 
   const speak = (text, rate = 0.85) => {
     if (!text || !window.speechSynthesis) return
+    
+    window.speechSynthesis.resume()
     window.speechSynthesis.cancel()
     setIsSpeaking(false)
     
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.rate = rate
+    utteranceRef.current = utterance
 
     utterance.onstart = () => setIsSpeaking(true)
-    utterance.onend = () => setIsSpeaking(false)
-    utterance.onerror = () => setIsSpeaking(false)
+    utterance.onend = () => {
+      setIsSpeaking(false)
+      utteranceRef.current = null
+    }
+    utterance.onerror = () => {
+      setIsSpeaking(false)
+      utteranceRef.current = null
+    }
     
     const attemptSpeak = () => {
-      const voices = window.speechSynthesis.getVoices()
+      const voices = voicesRef.current.length > 0 ? voicesRef.current : window.speechSynthesis.getVoices()
       if (voices.length === 0) return false
 
-      // On Mac/Chrome, "Google US English" is the robotic one. 
-      // "Samantha" or any voice NOT containing "Google" is usually the better system voice.
       const preferredVoice = 
         voices.find(v => v.name.includes('Samantha') && v.lang.startsWith('en')) ||
         voices.find(v => v.name.includes('Siri') && v.lang.startsWith('en')) ||
         voices.find(v => v.name.includes('Alex') && v.lang.startsWith('en')) ||
         voices.find(v => v.name.includes('Natural') && v.lang.startsWith('en')) ||
-        // If we must use Google, try to avoid the base US one if others exist
         voices.find(v => v.lang.startsWith('en-US') && !v.name.includes('Google')) ||
         voices.find(v => v.lang.startsWith('en-US')) ||
         voices[0]
@@ -75,11 +99,11 @@ export default function InterviewPage() {
     }
 
     if (!attemptSpeak()) {
-      // If voices aren't loaded yet, wait for them
-      window.speechSynthesis.onvoiceschanged = () => {
+      const handleVoicesOnce = () => {
         attemptSpeak()
-        window.speechSynthesis.onvoiceschanged = null // Only once
+        window.speechSynthesis.removeEventListener('voiceschanged', handleVoicesOnce)
       }
+      window.speechSynthesis.addEventListener('voiceschanged', handleVoicesOnce)
     }
   }
 
@@ -360,7 +384,11 @@ export default function InterviewPage() {
             onQuestionSpeak={speak} 
             ttsEnabled={ttsEnabled} 
             isSpeaking={isSpeaking} 
-            onStopSpeaking={() => setIsSpeaking(false)}
+            onStopSpeaking={() => {
+              window.speechSynthesis.cancel()
+              setIsSpeaking(false)
+              utteranceRef.current = null
+            }}
           />
 
           <AnswerRecorder 

@@ -57,7 +57,6 @@ export default function QuestionCard({ currentQuestion, onQuestionSpeak, ttsEnab
         <div className="flex gap-2">
           <button
             onClick={() => {
-              window.speechSynthesis.cancel()
               onStopSpeaking?.()
             }}
             className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground hover:text-red-500 bg-secondary/50 px-2.5 py-1.5 rounded-lg border border-border/50 hover:border-red-500/30 transition-all uppercase tracking-wide"
