@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { 
   Mic, StopCircle, RotateCcw, Send, ChevronLeft, ChevronRight, 
@@ -38,74 +38,69 @@ export default function InterviewPage() {
   const audioChunksRef = useRef([])
   const autoSubmitPendingRef = useRef(false)
   const utteranceRef = useRef(null)
-  const voicesRef = useRef([])
+  const resumeIntervalRef = useRef(null)
 
-  useEffect(() => {
-    const loadVoices = () => {
-      const v = window.speechSynthesis.getVoices()
-      if (v.length > 0) voicesRef.current = v
-    }
-    loadVoices()
-    if (window.speechSynthesis.addEventListener) {
-      window.speechSynthesis.addEventListener('voiceschanged', loadVoices)
-    }
-    return () => {
-      if (window.speechSynthesis.removeEventListener) {
-        window.speechSynthesis.removeEventListener('voiceschanged', loadVoices)
-      }
-    }
-  }, [])
+  const unlockTTS = () => {
+    if (!window.speechSynthesis) return
+    const unlock = new SpeechSynthesisUtterance('')
+    unlock.volume = 0
+    window.speechSynthesis.speak(unlock)
+    window.speechSynthesis.cancel()
+  }
 
-  const speak = (text, rate = 0.85) => {
+  const speak = useCallback(async (text, rate = 0.85) => {
     if (!text || !window.speechSynthesis) return
-    
-    window.speechSynthesis.resume()
+
     window.speechSynthesis.cancel()
     setIsSpeaking(false)
-    
+
+    await new Promise(r => setTimeout(r, 100))
+
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.rate = rate
     utteranceRef.current = utterance
 
+    const voices = await new Promise((resolve) => {
+      const v = window.speechSynthesis.getVoices()
+      if (v.length > 0) return resolve(v)
+      window.speechSynthesis.addEventListener('voiceschanged', () => {
+        resolve(window.speechSynthesis.getVoices())
+      }, { once: true })
+    })
+
+    const preferredVoice = 
+      voices.find(v => v.name.includes('Samantha') && v.lang.startsWith('en')) ||
+      voices.find(v => v.name.includes('Siri') && v.lang.startsWith('en')) ||
+      voices.find(v => v.name.includes('Alex') && v.lang.startsWith('en')) ||
+      voices.find(v => v.name.includes('Natural') && v.lang.startsWith('en')) ||
+      voices.find(v => v.lang.startsWith('en-US') && !v.name.includes('Google')) ||
+      voices.find(v => v.lang.startsWith('en-US')) ||
+      voices[0]
+
+    if (preferredVoice) utterance.voice = preferredVoice
+
+    if (resumeIntervalRef.current) clearInterval(resumeIntervalRef.current)
+    resumeIntervalRef.current = setInterval(() => {
+      if (window.speechSynthesis.speaking) window.speechSynthesis.resume()
+    }, 5000)
+
     utterance.onstart = () => setIsSpeaking(true)
     utterance.onend = () => {
+      if (resumeIntervalRef.current) clearInterval(resumeIntervalRef.current)
+      resumeIntervalRef.current = null
       setIsSpeaking(false)
       utteranceRef.current = null
     }
-    utterance.onerror = () => {
+    utterance.onerror = (e) => {
+      if (resumeIntervalRef.current) clearInterval(resumeIntervalRef.current)
+      resumeIntervalRef.current = null
       setIsSpeaking(false)
       utteranceRef.current = null
-    }
-    
-    const attemptSpeak = () => {
-      const voices = voicesRef.current.length > 0 ? voicesRef.current : window.speechSynthesis.getVoices()
-      if (voices.length === 0) return false
-
-      const preferredVoice = 
-        voices.find(v => v.name.includes('Samantha') && v.lang.startsWith('en')) ||
-        voices.find(v => v.name.includes('Siri') && v.lang.startsWith('en')) ||
-        voices.find(v => v.name.includes('Alex') && v.lang.startsWith('en')) ||
-        voices.find(v => v.name.includes('Natural') && v.lang.startsWith('en')) ||
-        voices.find(v => v.lang.startsWith('en-US') && !v.name.includes('Google')) ||
-        voices.find(v => v.lang.startsWith('en-US')) ||
-        voices[0]
-
-      if (preferredVoice) {
-        utterance.voice = preferredVoice
-      }
-      
-      window.speechSynthesis.speak(utterance)
-      return true
+      console.warn('TTS error:', e.error)
     }
 
-    if (!attemptSpeak()) {
-      const handleVoicesOnce = () => {
-        attemptSpeak()
-        window.speechSynthesis.removeEventListener('voiceschanged', handleVoicesOnce)
-      }
-      window.speechSynthesis.addEventListener('voiceschanged', handleVoicesOnce)
-    }
-  }
+    window.speechSynthesis.speak(utterance)
+  }, [])
 
 
   useEffect(() => {
@@ -314,7 +309,7 @@ export default function InterviewPage() {
   }
 
   const { interview, answers, currentQuestion } = interviewData
-  const handleStartSession = (enableAudio) => {
+  const handleStartSession = async (enableAudio) => {
     const qIndex = currentQuestion?.index
     if (qIndex !== undefined) {
       const storageKey = `interview_${id}_q_${qIndex}_startTime`
@@ -324,6 +319,8 @@ export default function InterviewPage() {
     }
     setTtsEnabled(enableAudio)
     if (enableAudio) {
+      unlockTTS()
+      await new Promise(r => setTimeout(r, 150))
       speak(currentQuestion?.question?.text)
     }
     setSessionStarted(true)
@@ -386,6 +383,8 @@ export default function InterviewPage() {
             isSpeaking={isSpeaking} 
             onStopSpeaking={() => {
               window.speechSynthesis.cancel()
+              if (resumeIntervalRef.current) clearInterval(resumeIntervalRef.current)
+              resumeIntervalRef.current = null
               setIsSpeaking(false)
               utteranceRef.current = null
             }}

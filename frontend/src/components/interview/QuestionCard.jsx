@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Volume2, VolumeX } from 'lucide-react'
 
@@ -10,13 +10,16 @@ const SPEEDS = [
 
 export default function QuestionCard({ currentQuestion, onQuestionSpeak, ttsEnabled, isSpeaking, onStopSpeaking }) {
   const text = currentQuestion?.question?.text
+  const index = currentQuestion?.index
   const [rate, setRate] = useState(0.85)
+  const hasSpokenRef = useRef(-1)
 
   useEffect(() => {
-    if (text && onQuestionSpeak && ttsEnabled) {
+    if (text && onQuestionSpeak && ttsEnabled && hasSpokenRef.current !== index) {
       onQuestionSpeak(text, rate)
+      hasSpokenRef.current = index
     }
-  }, [text])
+  }, [text, index, onQuestionSpeak, ttsEnabled, rate])
 
   const handleRecite = () => {
     if (text && onQuestionSpeak) {
