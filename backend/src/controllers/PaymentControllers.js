@@ -9,7 +9,7 @@ const razorpay = new Razorpay({
 
 exports.createOrder = async (req, res, next) => {
     try {
-        const amount = 999 * 100; // ₹999 in paise
+        const amount = 999 * 100;
         const options = {
             amount,
             currency: 'INR',
@@ -18,7 +18,6 @@ exports.createOrder = async (req, res, next) => {
 
         const order = await razorpay.orders.create(options);
 
-        // Store order ID in user record optionally (or just return it)
         await User.findByIdAndUpdate(req.user._id, { razorpayOrderId: order.id });
 
         res.status(201).json({
@@ -49,9 +48,8 @@ exports.verifyPayment = async (req, res, next) => {
             .digest('hex');
 
         if (expectedSignature === razorpay_signature) {
-            // Update User to Pro
             const planExpiresAt = new Date();
-            planExpiresAt.setDate(planExpiresAt.getDate() + 30); // 30 days validity
+            planExpiresAt.setDate(planExpiresAt.getDate() + 30);
 
             await User.findByIdAndUpdate(req.user._id, {
                 planType: 'pro',
