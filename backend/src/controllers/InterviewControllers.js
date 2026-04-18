@@ -190,7 +190,7 @@ async function submitAnswer(req, res, next) {
     try {
         const userId = req.user._id
         const { id } = req.params
-        const { rawTranscript, transcript, duration, timeLimitExceeded, status = 'submitted' } = req.body
+        const { rawTranscript, transcript, duration, timeLimitExceeded, status = 'submitted', hintUsed = false } = req.body
 
         const interview = await Interview.findById(id).lean()
         if (!interview) {
@@ -243,6 +243,12 @@ async function submitAnswer(req, res, next) {
                     status,
                     level: interview.level
                 })
+
+                if (hintUsed && evaluation.score > 0) {
+                    evaluation.score = Math.max(0, evaluation.score - 1)
+                    evaluation.feedback.improvements = evaluation.feedback.improvements || []
+                    evaluation.feedback.improvements.push('Relied on a hint for this question (-1 score penalty).')
+                }
             } catch {
                 evaluation = {
                     score: 0,
@@ -263,6 +269,7 @@ async function submitAnswer(req, res, next) {
                 answerOrder: currentQuestionIndex + 1,
                 duration: duration || 0,
                 timeLimitExceeded: timeLimitExceeded || false,
+                hintUsed: hintUsed || false,
                 status,
                 score: evaluation.score,
                 feedback: evaluation.feedback,

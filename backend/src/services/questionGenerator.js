@@ -18,7 +18,8 @@ async function generateQuestions({ role, specialization, level, questionType, co
         ? 'You are an expert HR and behavioral interviewer. You only output valid JSON. You must return a JSON object with a "questions" key.'
         : 'You are a technical interviewer. You only output valid JSON. You must return a JSON object with a "questions" key.'
 
-    let prompt = `Generate exactly ${safeCount} interview questions for a ${level} ${role} role${specialization ? ` specializing in ${specialization}` : ''}.
+    let prompt = `Generate exactly ${safeCount} interview questions for a ${level} ${role} role${specialization ? ` specializing strictly in ${specialization}` : ''}.
+CRITICAL INSTRUCTION: You must strictly limit your questions to the specified role and specialization. Do NOT ask questions about unrelated frameworks, libraries, or languages (e.g., do not ask React questions in a pure Javascript interview, do not ask Java questions in a Node interview).
 Difficulty Focus: ${levelHint}
 The questions must be of type: ${questionType}.
 

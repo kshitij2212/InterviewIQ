@@ -44,7 +44,10 @@ const answerSchema = new mongoose.Schema(
             type: Boolean,
             default: false
         },
-
+        hintUsed: {
+            type: Boolean,
+            default: false
+        },
         status: {
             type: String,
             enum: ['submitted', 'skipped', 'timeout'],
