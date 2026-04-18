@@ -40,6 +40,13 @@ export default function InterviewPage() {
   const utteranceRef = useRef(null)
   const resumeIntervalRef = useRef(null)
 
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis.cancel()
+      if (resumeIntervalRef.current) clearInterval(resumeIntervalRef.current)
+    }
+  }, [])
+
   const unlockTTS = () => {
     if (!window.speechSynthesis) return
     const unlock = new SpeechSynthesisUtterance('')
@@ -284,6 +291,8 @@ export default function InterviewPage() {
 
   const handleEndSession = async () => {
     try {
+      window.speechSynthesis.cancel()
+      if (resumeIntervalRef.current) clearInterval(resumeIntervalRef.current)
       setAnalyzing(true)
       await interviewApi.submitAnswer(id, {
         transcript: transcript,
