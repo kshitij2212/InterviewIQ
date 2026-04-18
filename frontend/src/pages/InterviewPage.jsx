@@ -28,6 +28,7 @@ export default function InterviewPage() {
   const [sessionStarted, setSessionStarted] = useState(false)
   const [ttsEnabled, setTtsEnabled] = useState(true)
   const [isSpeaking, setIsSpeaking] = useState(false)
+  const [hintUsed, setHintUsed] = useState(false)
 
   const [status, setStatus] = useState('idle')
   const [transcript, setTranscript] = useState('')
@@ -244,8 +245,11 @@ export default function InterviewPage() {
     try {
       const { data } = await interviewApi.submitAnswer(id, {
         status: 'skipped',
-        duration: QUESTION_TIME_LIMIT - timeLeft
+        duration: QUESTION_TIME_LIMIT - timeLeft,
+        hintUsed
       })
+
+      setHintUsed(false)
 
       if (data?.data?.isLastQuestion) {
         await interviewApi.complete(id)
@@ -271,8 +275,11 @@ export default function InterviewPage() {
       const { data } = await interviewApi.submitAnswer(id, {
         transcript: finalTranscript,
         duration: QUESTION_TIME_LIMIT - timeLeft,
-        status: finalTranscript ? 'submitted' : 'skipped'
+        status: finalTranscript ? 'submitted' : 'skipped',
+        hintUsed
       })
+      
+      setHintUsed(false)
       
       if (data.data.isLastQuestion) {
         await interviewApi.complete(id)
@@ -297,7 +304,8 @@ export default function InterviewPage() {
       await interviewApi.submitAnswer(id, {
         transcript: transcript,
         duration: QUESTION_TIME_LIMIT - timeLeft,
-        status: transcript ? 'submitted' : 'skipped'
+        status: transcript ? 'submitted' : 'skipped',
+        hintUsed
       })
       await interviewApi.complete(id)
       navigate(`/interview/${id}/results`)
@@ -329,8 +337,6 @@ export default function InterviewPage() {
     setTtsEnabled(enableAudio)
     if (enableAudio) {
       unlockTTS()
-      await new Promise(r => setTimeout(r, 150))
-      speak(currentQuestion?.question?.text)
     }
     setSessionStarted(true)
   }
@@ -397,6 +403,7 @@ export default function InterviewPage() {
               setIsSpeaking(false)
               utteranceRef.current = null
             }}
+            onHintUse={() => setHintUsed(true)}
           />
 
           <AnswerRecorder 

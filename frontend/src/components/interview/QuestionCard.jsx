@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { motion } from 'framer-motion'
-import { Volume2, VolumeX } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Volume2, VolumeX, Lightbulb } from 'lucide-react'
 
 const SPEEDS = [
   { label: 'Slow', rate: 0.5 },
@@ -8,11 +8,16 @@ const SPEEDS = [
   { label: 'Fast', rate: 1.1 },
 ]
 
-export default function QuestionCard({ currentQuestion, onQuestionSpeak, ttsEnabled, isSpeaking, onStopSpeaking }) {
+export default function QuestionCard({ currentQuestion, onQuestionSpeak, ttsEnabled, isSpeaking, onStopSpeaking, onHintUse }) {
   const text = currentQuestion?.question?.text
   const index = currentQuestion?.index
   const [rate, setRate] = useState(0.85)
   const hasSpokenRef = useRef(-1)
+  const [showHint, setShowHint] = useState(false)
+
+  useEffect(() => {
+    setShowHint(false)
+  }, [index])
 
   useEffect(() => {
     if (text && onQuestionSpeak && ttsEnabled && hasSpokenRef.current !== index) {
@@ -84,13 +89,45 @@ export default function QuestionCard({ currentQuestion, onQuestionSpeak, ttsEnab
         {text}
       </h2>
 
-      <div className="flex flex-wrap gap-2">
-        {currentQuestion?.question?.expectedKeywords?.slice(0, 4).map(tag => (
-          <span key={tag} className="text-[11px] font-bold text-muted-foreground bg-secondary px-3 py-1.5 rounded-md border border-border hover:border-accent/40 transition-colors">
-            {tag.toUpperCase()}
-          </span>
-        ))}
-      </div>
+      {currentQuestion?.question?.expectedKeywords?.length > 0 && (
+        <div className="mt-8 border-t border-border/50 pt-6">
+          {!showHint ? (
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => {
+                  setShowHint(true)
+                  onHintUse?.()
+                }}
+                className="group flex items-center gap-2 text-xs font-bold text-foreground hover:text-accent transition-all bg-background px-4 py-2.5 rounded-lg border border-border shadow-sm hover:border-accent/40"
+              >
+                <Lightbulb size={16} className="text-accent group-hover:scale-110 transition-transform" />
+                Need a hint?
+              </button>
+              <span className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/60">
+                Costs 1 point
+              </span>
+            </div>
+          ) : (
+            <motion.div 
+               initial={{ opacity: 0, height: 0 }}
+               animate={{ opacity: 1, height: 'auto' }}
+               className="bg-background rounded-xl border border-border p-5 overflow-hidden shadow-sm"
+            >
+              <div className="flex items-center gap-2 text-sm font-bold text-foreground mb-4">
+                <Lightbulb size={16} className="text-accent" />
+                Try to include these keywords in your answer:
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {currentQuestion.question.expectedKeywords.map(tag => (
+                  <span key={tag} className="text-[11px] font-bold text-accent bg-accent/10 px-3 py-1.5 rounded-md border border-accent/20 shadow-sm">
+                    {tag.toUpperCase()}
+                  </span>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </div>
+      )}
     </motion.div>
   )
 }
