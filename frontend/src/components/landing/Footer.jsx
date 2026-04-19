@@ -20,8 +20,8 @@ export default function DashboardFooter() {
 
           <div className="flex-1 flex justify-end items-center gap-8">
              <Link to="/help" className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-accent transition-colors">Help</Link>
-             <Link to="/settings" className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-accent transition-colors">Privacy</Link>
-             <Link to="/settings" className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-accent transition-colors">Terms</Link>
+             <Link to="/privacy" className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-accent transition-colors">Privacy</Link>
+             <Link to="/terms" className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-accent transition-colors">Terms</Link>
           </div>
 
         </div>
