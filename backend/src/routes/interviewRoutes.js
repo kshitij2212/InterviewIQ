@@ -8,7 +8,8 @@ const {
     abandonInterview,
     getHistory,
     getSetupConfig,
-    getInterviewSession
+    getInterviewSession,
+    reattemptInterview
 } = require('../controllers/InterviewControllers')
 const authMiddleware = require('../middleware/authMiddleware')
 const { apiLimiter } = require('../middleware/rateLimiter')
@@ -26,5 +27,6 @@ router.get('/:id/question', getCurrentQuestion)
 router.post('/:id/answer', submitAnswer)
 router.post('/:id/complete', completeInterview)
 router.post('/:id/abandon', abandonInterview)
+router.post('/:id/reattempt', reattemptInterview)
 
 module.exports = router

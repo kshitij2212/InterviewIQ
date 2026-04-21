@@ -539,6 +539,75 @@ async function getSetupConfig(req, res, next) {
     }
 }
 
+async function reattemptInterview(req, res, next) {
+    try {
+        const userId = req.user._id
+        const { id } = req.params
+
+        const previousInterview = await Interview.findById(id).lean()
+        if (!previousInterview) {
+            return res.status(404).json({ success: false, message: 'Interview not found' })
+        }
+
+        if (previousInterview.userId.toString() !== userId.toString()) {
+            return res.status(403).json({ success: false, message: 'Unauthorized' })
+        }
+
+        const user = await User.findById(userId)
+        if (!user.canStartInterview()) {
+            return res.status(403).json({
+                success: false,
+                message: 'Daily interview limit reached. Upgrade to Pro for unlimited interviews.'
+            })
+        }
+
+        const interview = await Interview.create({
+            userId,
+            role: previousInterview.role,
+            specialization: previousInterview.specialization,
+            level: previousInterview.level,
+            type: previousInterview.type,
+            questionIds: previousInterview.questionIds
+        })
+
+        const todayStr = getISTDateString()
+        if (user.dailyInterviewDate !== todayStr) {
+            user.dailyInterviewDate = todayStr
+            user.dailyInterviewCount = 1
+        } else {
+            user.dailyInterviewCount += 1
+        }
+        
+        if (user.planType !== 'pro' && user.dailyInterviewCount > DAILY_INTERVIEW_LIMIT) {
+            return res.status(403).json({
+                success: false,
+                message: 'Daily interview limit reached.'
+            })
+        }
+        
+        await user.save()
+
+        const firstQuestion = await Question.findById(
+            previousInterview.questionIds[0],
+            'text role level questionType expectedKeywords'
+        ).lean()
+
+        return res.status(201).json({
+            success: true,
+            data: {
+                interviewId: interview.id,
+                currentQuestion: {
+                    index: 0,
+                    total: previousInterview.questionIds.length,
+                    question: firstQuestion
+                }
+            }
+        })
+    } catch (err) {
+        next(err)
+    }
+}
+
 module.exports = {
     startInterview,
     getCurrentQuestion,
@@ -547,5 +616,6 @@ module.exports = {
     abandonInterview,
     getHistory,
     getSetupConfig,
-    getInterviewSession
+    getInterviewSession,
+    reattemptInterview
 }
