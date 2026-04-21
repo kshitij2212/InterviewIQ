@@ -299,7 +299,8 @@ export default function InterviewSetupPage() {
 
   const currentSpecs     = remoteConfig.roles[selectedRole] || null
   const hasSpecialization = currentSpecs !== null
-  const isSpecialRole     = selectedRole === 'hr' || selectedRole === 'introduction'
+  const normalizedRole    = selectedRole?.toLowerCase()
+  const isSpecialRole     = normalizedRole === 'hr' || normalizedRole === 'introduction'
 
   function handleRoleChange(role) {
     const PRO_ROLES = ['devops', 'mobile', 'AI_ML']
@@ -311,10 +312,10 @@ export default function InterviewSetupPage() {
     setSelectedRole(role)
     setSelectedSpec(remoteConfig.roles[role]?.[0] || null)
     
-    if (role === 'hr' || role === 'introduction') {
+    if (role.toLowerCase() === 'hr' || role.toLowerCase() === 'introduction') {
       setSelectedType('hr')
       setSelectedLevel('fresher')
-    } else if (selectedRole === 'hr' || selectedRole === 'introduction') {
+    } else if (normalizedRole === 'hr' || normalizedRole === 'introduction') {
       setSelectedType(remoteConfig.interviewTypes[0])
       setSelectedLevel(remoteConfig.levels[1] || remoteConfig.levels[0])
     }
