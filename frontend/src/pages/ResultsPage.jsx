@@ -20,6 +20,7 @@ export default function ResultsPage() {
   const [loading, setLoading] = useState(true)
   const [isReattempting, setIsReattempting] = useState(false)
   const [data, setData] = useState(null)
+  const [error, setError] = useState(null)
 
   const handleExport = () => {
     window.print()
@@ -28,11 +29,14 @@ export default function ResultsPage() {
   const handleReattempt = async () => {
     try {
       setIsReattempting(true)
+      setError(null)
       const res = await interviewApi.reattempt(id)
       const newInterviewId = res.data.data.interviewId
       navigate(`/interview/${newInterviewId}`)
     } catch (err) {
       console.error('Failed to reattempt interview:', err)
+      const errorMsg = err.response?.data?.message || err.message || 'Failed to reattempt interview'
+      setError(errorMsg)
       setIsReattempting(false)
     }
   }
@@ -133,8 +137,20 @@ export default function ResultsPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3 print:hidden">
-             <Button 
+          <div className="flex flex-col items-end gap-3 print:hidden">
+             {error && (
+                <div className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-red-200 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 w-full max-w-sm">
+                   <div className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span className="leading-tight">{error}</span>
+                   </div>
+                   <Link to="/profile" className="shrink-0 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg transition-colors shadow-sm">
+                      Get Pro
+                   </Link>
+                </div>
+             )}
+             <div className="flex items-center gap-3">
+                <Button 
                 disabled={isReattempting}
                 onClick={handleExport}
                 variant="outline" 
@@ -158,6 +174,7 @@ export default function ResultsPage() {
              >
                 <Zap className="w-4 h-4" /> New Interview
              </Button>
+             </div>
           </div>
         </div>
 
@@ -256,7 +273,18 @@ export default function ResultsPage() {
                        </p>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                     {error && (
+                        <div className="mb-4 bg-red-50 text-red-600 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-red-200 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-3 animate-in fade-in slide-in-from-top-2 w-full">
+                           <div className="flex items-center gap-2 text-center sm:text-left">
+                              <AlertCircle className="w-4 h-4 shrink-0" />
+                              <span className="leading-tight">{error}</span>
+                           </div>
+                           <Link to="/profile" className="shrink-0 bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-lg transition-colors shadow-sm w-full sm:w-auto text-center">
+                              Upgrade to Pro
+                           </Link>
+                        </div>
+                     )}
+                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                        <Button 
                           disabled={isReattempting}
                           onClick={handleReattempt} 
