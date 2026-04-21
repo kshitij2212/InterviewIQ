@@ -8,7 +8,7 @@ function normalizeText(text) {
 
 async function generateQuestions({ role, specialization, level, questionType, count = 5 }) {
     const safeCount = Math.min(
-        Math.max(count, INTERVIEW_QUESTION_LIMITS.min),
+        Math.max(count + 2, INTERVIEW_QUESTION_LIMITS.min),
         INTERVIEW_QUESTION_LIMITS.max
     )
 

@@ -68,7 +68,19 @@ async function startInterview(req, res, next) {
             questionType,
             _id: { $nin: seenQuestionIds }
         }
-        if (specialization) questionQuery.specialization = specialization
+
+        if (specialization) {
+            questionQuery.$or = [
+                { specialization: specialization },
+                { specialization: null },
+                { specialization: { $exists: false } }
+            ]
+        } else {
+            questionQuery.$or = [
+                { specialization: null },
+                { specialization: { $exists: false } }
+            ]
+        }
 
         let questions = await Question.aggregate([
             { $match: questionQuery },
