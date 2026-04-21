@@ -18,10 +18,23 @@ export default function ResultsPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
+  const [isReattempting, setIsReattempting] = useState(false)
   const [data, setData] = useState(null)
 
   const handleExport = () => {
     window.print()
+  }
+
+  const handleReattempt = async () => {
+    try {
+      setIsReattempting(true)
+      const res = await interviewApi.reattempt(id)
+      const newInterviewId = res.data.data.interviewId
+      navigate(`/interview/${newInterviewId}`)
+    } catch (err) {
+      console.error('Failed to reattempt interview:', err)
+      setIsReattempting(false)
+    }
   }
 
   useEffect(() => {
@@ -122,13 +135,24 @@ export default function ResultsPage() {
 
           <div className="flex items-center gap-3 print:hidden">
              <Button 
+                disabled={isReattempting}
                 onClick={handleExport}
                 variant="outline" 
-                className="border-slate-200 text-slate-600 bg-white hover:bg-slate-50 gap-2 h-11 px-6 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all"
+                className="border-slate-200 text-slate-600 bg-white hover:bg-slate-50 gap-2 h-11 px-6 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all hover:scale-105 active:scale-95"
              >
                 <Share2 className="w-4 h-4" /> Export Report
              </Button>
              <Button 
+                disabled={isReattempting}
+                onClick={handleReattempt}
+                variant="outline"
+                className="border-accent text-accent bg-accent/5 hover:bg-accent/10 gap-1.5 h-11 px-4 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all hover:scale-105 active:scale-95"
+             >
+                {isReattempting ? <FastForward className="w-4 h-4 animate-spin" /> : <Target className="w-4 h-4" />}
+                {isReattempting ? 'Loading...' : 'Reattempt Interview'}
+             </Button>
+             <Button 
+                disabled={isReattempting}
                 onClick={() => navigate('/interview/setup')}
                 className="bg-accent text-white hover:bg-accent/90 gap-2 h-11 px-8 rounded-xl font-bold uppercase text-[10px] tracking-widest shadow-xl shadow-accent/20 transition-all hover:scale-105 active:scale-95"
              >
@@ -233,7 +257,19 @@ export default function ResultsPage() {
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                       <Button onClick={() => navigate('/interview/setup')} className="h-14 px-10 rounded-xl bg-accent text-white hover:bg-accent/90 font-black uppercase tracking-widest text-[10px] shadow-xl shadow-accent/20 transition-all hover:scale-105 active:scale-95">
+                       <Button 
+                          disabled={isReattempting}
+                          onClick={handleReattempt} 
+                          variant="outline"
+                          className="h-11 px-4 rounded-xl border-accent text-accent bg-accent/5 hover:bg-accent/10 font-bold uppercase tracking-widest text-[10px] shadow-sm transition-all hover:scale-105 active:scale-95 w-full sm:w-auto"
+                       >
+                          Reattempt Interview
+                       </Button>
+                       <Button 
+                          disabled={isReattempting}
+                          onClick={() => navigate('/interview/setup')} 
+                          className="h-11 px-8 rounded-xl bg-accent text-white hover:bg-accent/90 font-bold uppercase tracking-widest text-[10px] shadow-sm transition-all hover:scale-105 active:scale-95 w-full sm:w-auto"
+                       >
                           Launch Next Assessment
                        </Button>
                     </div>

@@ -8,6 +8,7 @@ export const interviewApi = {
     submitAnswer: (id, data) => axiosInstance.post(`/interviews/${id}/answer`, data),
     complete: (id) => axiosInstance.post(`/interviews/${id}/complete`),
     abandon: (id) => axiosInstance.post(`/interviews/${id}/abandon`),
+    reattempt: (id) => axiosInstance.post(`/interviews/${id}/reattempt`),
     getHistory: (params) => axiosInstance.get('/interviews/history', { params }),
     transcribe: (audioBlob) => {
         const formData = new FormData();
