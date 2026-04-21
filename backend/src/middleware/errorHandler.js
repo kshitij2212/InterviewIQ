@@ -41,7 +41,17 @@ function errorHandler(err, req, res, next) {
         })
     }
 
-    const statusCode = err.statusCode || (err.message?.startsWith('Specialization') ? 400 : 500)
+    let statusCode = err.statusCode || 500
+    
+    const isValidationError = 
+        err.name === 'ValidationError' || 
+        err.message?.includes('required') || 
+        err.message?.includes('Invalid') ||
+        err.message?.startsWith('Specialization')
+
+    if (isValidationError && statusCode === 500) {
+        statusCode = 400
+    }
     
     return res.status(statusCode).json({
         success: false,

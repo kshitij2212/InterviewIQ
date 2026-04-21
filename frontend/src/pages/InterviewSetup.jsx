@@ -19,11 +19,11 @@ const ROLE_META = {
   backend:               { icon: Server,        sub: 'Node, Django, Spring' },
   coding_languages:      { icon: Braces,        sub: 'JS, Java, Python' },
   data_science:          { icon: BarChart2,     sub: 'Analytics & Insights' },
-  HR:                    { icon: Users,         sub: 'People & Culture' },
+  hr:                    { icon: Users,         sub: 'People & Culture' },
   introduction:          { icon: User,          sub: 'Personal Background' },
   devops:                { icon: Database,      sub: 'CI/CD, Cloud, Infra' },
   mobile:                { icon: Smartphone,    sub: 'iOS, Android, RN' },
-  AI_ML:                 { icon: Brain,         sub: 'Models & Pipelines' },
+  ai_ml:                 { icon: Brain,         sub: 'Models & Pipelines' },
 }
 
 const TYPE_META = {
@@ -303,7 +303,7 @@ export default function InterviewSetupPage() {
   const isSpecialRole     = normalizedRole === 'hr' || normalizedRole === 'introduction'
 
   function handleRoleChange(role) {
-    const PRO_ROLES = ['devops', 'mobile', 'AI_ML']
+    const PRO_ROLES = ['devops', 'mobile', 'ai_ml']
     if (PRO_ROLES.includes(role) && user?.planType !== 'pro') {
       setShowProPopup(true)
       return
@@ -312,10 +312,10 @@ export default function InterviewSetupPage() {
     setSelectedRole(role)
     setSelectedSpec(remoteConfig.roles[role]?.[0] || null)
     
-    if (role.toLowerCase() === 'hr' || role.toLowerCase() === 'introduction') {
+    if (role === 'hr' || role === 'introduction') {
       setSelectedType('hr')
       setSelectedLevel('fresher')
-    } else if (normalizedRole === 'hr' || normalizedRole === 'introduction') {
+    } else if (isSpecialRole) {
       setSelectedType(remoteConfig.interviewTypes[0])
       setSelectedLevel(remoteConfig.levels[1] || remoteConfig.levels[0])
     }

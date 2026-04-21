@@ -3,11 +3,11 @@ const ROLE_SPECIALIZATION_MAP = {
     backend:               ['node', 'express', 'django', 'spring', 'fastapi', 'nestjs'],
     coding_languages:      ['javascript', 'python', 'java', 'C++', 'ruby', 'go'],
     data_science:          ['python', 'spark', 'mongodb', 'sql', 'tableau', 'power_bi'],
-    HR:                    null,
+    hr:                    null,
     introduction:          null,
     devops:                ['aws', 'gcp', 'azure', 'kubernetes', 'docker', 'terraform'],
     mobile:                ['ios', 'android', 'flutter', 'react_native', 'kotlin', 'swift'],
-    AI_ML:                 ['tensorflow', 'pytorch', 'scikit_learn', 'nlp', 'computer_vision'],
+    ai_ml:                 ['tensorflow', 'pytorch', 'scikit_learn', 'nlp', 'computer_vision'],
 }
 
 const VALID_ROLES = Object.keys(ROLE_SPECIALIZATION_MAP)
