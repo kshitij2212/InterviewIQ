@@ -16,7 +16,9 @@ const transcribeRoutes = require('./routes/transcribeRoutes')
 const paymentRoutes = require('./routes/paymentRoutes')
 
 const app = express()
-app.use(helmet())
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}))
 app.use(morgan('dev'))
 app.use(compression())
 const corsOptions = {
