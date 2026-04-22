@@ -5,6 +5,7 @@ import { User, Mail, Edit2, Check, Loader2, Shield, Calendar, Award, Zap } from 
 import { motion, AnimatePresence } from 'framer-motion'
 import { paymentApi } from '../api/payment'
 import { toast } from 'react-hot-toast'
+import { loadRazorpay } from '../utils/razorpayLoader'
 
 export default function ProfilePage() {
   const { user, isAuthenticated, updateName, fetchUser } = useAuthStore()
@@ -47,6 +48,12 @@ export default function ProfilePage() {
   const handleUpgrade = async () => {
     try {
       setUpgrading(true)
+      const res = await loadRazorpay()
+      if (!res) {
+        toast.error('Failed to load payment gateway. Please check your connection.')
+        return
+      }
+
       const token = localStorage.getItem('token')
       const { data } = await paymentApi.createOrder(token)
       const order = data.data
@@ -104,7 +111,7 @@ export default function ProfilePage() {
               
               <div className="relative group">
                 <div className="h-16 w-16 rounded-2xl overflow-hidden border-2 border-accent/10 shadow-xl shadow-accent/5 shrink-0 bg-white">
-                  {user?.avatar ? (
+                  {user?.avatar && user.avatar !== 'undefined' ? (
                     <img src={user.avatar} alt={user.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
                   ) : (
                     <div className="h-full w-full bg-gradient-to-br from-indigo-50 to-indigo-100/50 text-indigo-700 flex items-center justify-center font-black text-2xl uppercase tracking-tighter">

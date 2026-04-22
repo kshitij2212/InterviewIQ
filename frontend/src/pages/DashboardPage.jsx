@@ -176,7 +176,7 @@ export default function DashboardPage() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
               <div className="flex items-center gap-5">
                 <div className="h-16 w-16 rounded-2xl overflow-hidden border-2 border-accent/10 shadow-xl shadow-accent/5 shrink-0 bg-white flex items-center justify-center">
-                   {user?.avatar ? (
+                   {user?.avatar && user.avatar !== 'undefined' ? (
                      <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
                    ) : (
                      <div className="h-full w-full bg-indigo-50 text-indigo-700 flex items-center justify-center font-black text-xl uppercase tracking-tighter">
