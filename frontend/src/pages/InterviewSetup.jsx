@@ -12,6 +12,7 @@ import { paymentApi } from '../api/payment'
 import { Button } from '../components/ui/Button'
 import { useAuthStore } from '../store/authStore'
 import { toast } from 'react-hot-toast'
+import { loadRazorpay } from '../utils/razorpayLoader'
 
 
 const ROLE_META = {
@@ -365,6 +366,12 @@ export default function InterviewSetupPage() {
   async function handleUpgrade() {
     try {
       setLoading(true)
+      const res = await loadRazorpay()
+      if (!res) {
+        toast.error('Failed to load payment gateway. Please check your connection.')
+        return
+      }
+
       const token = localStorage.getItem('token')
       const { data } = await paymentApi.createOrder(token)
       const order = data.data

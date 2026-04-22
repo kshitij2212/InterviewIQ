@@ -31,9 +31,17 @@ export default function StartupLoader({ onReady }) {
     let cancelled = false;
     const check = async () => {
       try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
+        const rawUrl = import.meta.env.VITE_API_URL;
+        if (!rawUrl || rawUrl === 'undefined') {
+           setServerReady(true);
+           return;
+        }
+        const baseUrl = rawUrl || 'http://localhost:4000/api/v1';
         const rootUrl = baseUrl.replace('/api/v1', '/');
-        await fetch(rootUrl, { mode: 'no-cors' });
+        
+        if (rootUrl && rootUrl !== 'undefined/') {
+           await fetch(rootUrl, { mode: 'no-cors' });
+        }
         if (!cancelled) {
           setServerReady(true);
         }
