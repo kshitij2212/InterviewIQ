@@ -6,12 +6,12 @@ export default function StartupLoader({ onReady }) {
   const [phase, setPhase] = useState(0);
   const [fills, setFills] = useState([0, 0, 0]);
   const [serverReady, setServerReady] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
-  const steps = [
-    { text: 'Initializing your session', sub: 'Spinning up AI engine...' },
-    { text: 'Loading question bank', sub: 'Fetching curated interview sets...' },
-    { text: 'Almost ready!', sub: 'Finalizing your workspace...' },
-  ];
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), 600);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     let prog = 0;
@@ -34,7 +34,9 @@ export default function StartupLoader({ onReady }) {
         const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
         const rootUrl = baseUrl.replace('/api/v1', '/');
         await fetch(rootUrl, { mode: 'no-cors' });
-        if (!cancelled) setServerReady(true);
+        if (!cancelled) {
+          setServerReady(true);
+        }
       } catch (err) {
         if (!cancelled) setTimeout(check, POLL_INTERVAL_MS);
       }
@@ -44,10 +46,24 @@ export default function StartupLoader({ onReady }) {
   }, []);
 
   useEffect(() => {
-    if (serverReady && fills[2] === 100) onReady();
-  }, [serverReady, fills, onReady]);
+    if (serverReady) {
+      if (!isVisible) {
+        onReady();
+      } else if (fills[2] === 100) {
+        onReady();
+      }
+    }
+  }, [serverReady, isVisible, fills, onReady]);
 
   const isDone = serverReady && fills[2] === 100;
+
+  const steps = [
+    { text: 'Initializing your session', sub: 'Spinning up AI engine...' },
+    { text: 'Loading question bank', sub: 'Fetching curated interview sets...' },
+    { text: 'Almost ready!', sub: 'Finalizing your workspace...' },
+  ];
+
+  if (!isVisible) return null;
 
   const chipStyle = (i) => ({
     display: 'flex',

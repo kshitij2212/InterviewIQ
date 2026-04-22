@@ -19,7 +19,7 @@ import HelpPage from './pages/HelpPage'
 
 export default function App() {
   const fetchUser = useAuthStore(s => s.fetchUser)
-  const [isServerReady, setIsServerReady] = useState(false)
+  const [isServerReady, setIsServerReady] = useState(() => sessionStorage.getItem('server_ready') === 'true')
 
   useEffect(() => {
     if (isServerReady) {
@@ -28,7 +28,14 @@ export default function App() {
   }, [fetchUser, isServerReady])
 
   if (!isServerReady) {
-    return <StartupLoader onReady={() => setIsServerReady(true)} />
+    return (
+      <StartupLoader 
+        onReady={() => {
+          sessionStorage.setItem('server_ready', 'true')
+          setIsServerReady(true)
+        }} 
+      />
+    )
   }
 
   return (
