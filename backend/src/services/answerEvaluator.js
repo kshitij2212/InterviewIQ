@@ -9,9 +9,14 @@ function getKeywordScore(transcript, expectedKeywords) {
     return (matched.length / expectedKeywords.length) * SCORE_RANGE.max
 }
 
-async function evaluateWithLLM({ questionText, transcript, expectedKeywords, level = 'fresher' }) {
+async function evaluateWithLLM({ questionText, transcript, expectedKeywords, level = 'fresher', questionType = 'technical' }) {
+    const isHR = questionType === 'hr'
     const safeKeywords = Array.isArray(expectedKeywords) ? expectedKeywords : []
     const levelHint = LEVEL_DIFFICULTY_HINTS[level] || ''
+
+    const systemPrompt = isHR
+        ? 'You are an expert HR and behavioral interviewer. You evaluate candidates based on their communication, soft skills, and situational responses. You only output valid JSON objects.'
+        : 'You are a technical interviewer assistant. You evaluate candidates based on their technical accuracy and depth. You only output valid JSON objects.'
 
     const prompt = `Evaluate this interview answer strictly.
 Candidate Level: ${level} (${levelHint})
@@ -38,7 +43,7 @@ Return ONLY valid JSON in this exact shape:
         const res = await groq.chat.completions.create({
             model: 'llama-3.3-70b-versatile',
             messages: [
-                { role: 'system', content: 'You are a technical interviewer assistant. You only output valid JSON objects. Do not include markdown or explanations.' },
+                { role: 'system', content: systemPrompt },
                 { role: 'user', content: prompt }
             ],
             response_format: { type: 'json_object' },
@@ -75,7 +80,7 @@ Return ONLY valid JSON in this exact shape:
     return parsed
 }
 
-async function evaluateAnswer({ questionText, transcript, expectedKeywords, status, level }) {
+async function evaluateAnswer({ questionText, transcript, expectedKeywords, status, level, questionType = 'technical' }) {
     if (status === 'skipped' || status === 'timeout') {
         return {
             score: 0,
@@ -102,7 +107,8 @@ async function evaluateAnswer({ questionText, transcript, expectedKeywords, stat
         questionText, 
         transcript, 
         expectedKeywords: safeKeywords,
-        level: level || 'fresher'
+        level: level || 'fresher',
+        questionType
     })
 
     const finalScore = safeKeywords.length > 0
@@ -123,6 +129,7 @@ async function evaluateAnswer({ questionText, transcript, expectedKeywords, stat
 async function generateOverallFeedback({ role, level, type, answers }) {
     if (!answers || answers.length === 0) return null
 
+    const isHR = type === 'hr'
     const sessionSummary = answers.map((a, i) => `
 Q${i + 1}: ${a.questionId?.text || 'Question'}
 Score: ${a.score}/10
@@ -131,7 +138,7 @@ Strengths: ${a.feedback?.strengths?.join(', ')}
 Improvements: ${a.feedback?.improvements?.join(', ')}
 `).join('\n---\n')
 
-    const prompt = `You are an elite career coach and expert technical interviewer. 
+    const prompt = `You are an ${isHR ? 'expert HR consultant' : 'elite technical career coach'}. 
 Analyze this full interview session for a ${level} ${role} (${type} interview). 
 
 SESSION DATA:

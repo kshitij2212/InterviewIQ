@@ -253,7 +253,8 @@ async function submitAnswer(req, res, next) {
                     transcript: transcript || null,
                     expectedKeywords: currentQuestion.expectedKeywords,
                     status,
-                    level: interview.level
+                    level: interview.level,
+                    questionType: currentQuestion.questionType
                 })
 
                 if (hintUsed && evaluation.score > 0) {
