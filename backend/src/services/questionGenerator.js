@@ -20,7 +20,7 @@ function buildPrompt({ role, specialization, level, questionType, safeCount, isH
 Return a JSON object with a "questions" key containing the array. Each question MUST include:
 1. The question text in "text"
 2. At least 3-5 relevant soft-skill/behavioral keywords in "expectedKeywords"
-3. A highly accurate, concise, ideal 10/10 answer for this specific question in "bestResponse"
+3. A highly sophisticated, ideal 10/10 answer for this specific question in "bestResponse" (FAANG caliber)
 
 {
   "questions": [
@@ -41,7 +41,7 @@ The questions must be of type: ${questionType}.
 Return a JSON object with a "questions" key containing the array. Each question MUST include:
 1. The question text in "text"
 2. At least 3-5 relevant ${isHR ? 'behavioral and soft-skill' : 'technical'} keywords in "expectedKeywords"
-3. A highly accurate, concise, ideal 10/10 answer for this specific question in "bestResponse"
+3. A highly sophisticated, ideal 10/10 answer for this specific question in "bestResponse". The answer should be of FAANG-interview caliber, reflecting deep expertise, industry best practices, and a structured delivery (e.g., using the STAR method for behavioral questions, or addressing architecture, trade-offs, and scalability for technical questions).
 
 {
   "questions": [
@@ -62,8 +62,8 @@ async function generateQuestions({ role, specialization, level, questionType, co
 
     const isHR = questionType === 'hr' || role === 'introduction'
     const systemPrompt = isHR 
-        ? 'You are an expert HR and behavioral interviewer. You only output valid JSON.'
-        : 'You are a technical interviewer. You only output valid JSON.'
+        ? 'You are an expert HR and behavioral interviewer from a top-tier FAANG company. You only output valid JSON.'
+        : 'You are a senior technical interviewer from a top-tier FAANG company. You only output valid JSON.'
 
     const prompt = buildPrompt({ role, specialization, level, questionType, safeCount, isHR })
 
