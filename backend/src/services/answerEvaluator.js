@@ -18,11 +18,17 @@ async function evaluateWithLLM({ questionText, transcript, expectedKeywords, lev
         ? 'You are an expert HR and behavioral interviewer. You evaluate candidates based on their communication, soft skills, and situational responses. You only output valid JSON objects.'
         : 'You are a technical interviewer assistant. You evaluate candidates based on their technical accuracy and depth. You only output valid JSON objects.'
 
-    const prompt = `Evaluate this interview answer strictly.
+    const prompt = `Evaluate this interview answer.
 Candidate Level: ${level} (${levelHint})
 Question: ${questionText}
 Answer: ${transcript}
 Expected Keywords: ${safeKeywords.join(', ')}
+
+SCORING RULES:
+- For junior/fresher candidates: Be lenient. If the core concept is understandable and correct, award good marks even if the answer is short or lacks perfect grammar. Do not penalize for brevity.
+- For mid-level/senior candidates: Evaluate strictly. They must provide in-depth, well-structured, and comprehensive answers. Penalize short, superficial, or incomplete answers appropriately.
+- ALL LEVELS: If the answer is JUST a disconnected list of keywords with zero context, penalize heavily (max 4-5/10). Basic understanding must be demonstrated.
+- Evaluate based on whether they grasped the fundamental concept, adjusting expectations according to their level.
 
 Return ONLY valid JSON in this exact shape:
 {
@@ -111,9 +117,14 @@ async function evaluateAnswer({ questionText, transcript, expectedKeywords, stat
         questionType
     })
 
-    const finalScore = safeKeywords.length > 0
-        ? Math.min(Math.round(0.6 * llmResult.score + 0.4 * keywordScore), SCORE_RANGE.max)
-        : Math.round(llmResult.score)
+    let finalScore = Math.round(llmResult.score);
+    if (safeKeywords.length > 0) {
+        if (llmResult.score <= 4) {
+            finalScore = Math.min(Math.round(0.7 * llmResult.score + 0.3 * keywordScore), SCORE_RANGE.max);
+        } else {
+            finalScore = Math.min(Math.round(0.6 * llmResult.score + 0.4 * keywordScore), SCORE_RANGE.max);
+        }
+    }
 
     return {
         score: finalScore,
