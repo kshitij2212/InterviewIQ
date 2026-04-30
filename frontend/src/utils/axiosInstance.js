@@ -23,8 +23,17 @@ axiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response && error.response.status === 401) {
-            useAuthStore.getState().logout();
-            window.location.href = '/';
+            const originalRequest = error.config;
+            const isAuthEndpoint = originalRequest && originalRequest.url && (
+                originalRequest.url.includes('/auth/login') ||
+                originalRequest.url.includes('/auth/register') ||
+                originalRequest.url.includes('/auth/google')
+            );
+
+            if (!isAuthEndpoint) {
+                useAuthStore.getState().logout();
+                window.location.href = '/';
+            }
         }
         return Promise.reject(error);
     }
