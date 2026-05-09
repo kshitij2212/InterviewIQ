@@ -1,29 +1,42 @@
 import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles, Activity, Server, ShieldCheck } from 'lucide-react';
 
 const POLL_INTERVAL_MS = 4000;
 
+const loadingSteps = [
+  { text: "Waking up server", icon: Server },
+  { text: "Initializing AI engine", icon: Sparkles },
+  { text: "Establishing secure connection", icon: ShieldCheck },
+  { text: "Preparing workspace", icon: Activity },
+];
+
 export default function StartupLoader({ onReady }) {
-  const [phase, setPhase] = useState(0);
-  const [fills, setFills] = useState([0, 0, 0]);
+  const [progress, setProgress] = useState(0);
   const [serverReady, setServerReady] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [stepIndex, setStepIndex] = useState(0);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), 600);
+    const timer = setTimeout(() => setIsVisible(true), 800);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
+    if (serverReady) return;
+    const interval = setInterval(() => {
+      setStepIndex((prev) => (prev + 1) % loadingSteps.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [serverReady]);
+
+  useEffect(() => {
     let prog = 0;
     const interval = setInterval(() => {
-      prog += 2;
-      if (prog <= 100) setFills([prog, 0, 0]);
-      if (prog === 102) setPhase(1);
-      if (prog > 110 && prog <= 210) setFills([100, prog - 110, 0]);
-      if (prog === 212) setPhase(2);
-      if (prog > 220 && prog <= 320) setFills([100, 100, prog - 220]);
-      if (prog >= 320) { setFills([100, 100, 100]); clearInterval(interval); }
-    }, 60);
+      prog += (90 - prog) * 0.05;
+      if (prog > 89.5) prog = 90;
+      setProgress(prog);
+    }, 100);
     return () => clearInterval(interval);
   }, []);
 
@@ -57,270 +70,113 @@ export default function StartupLoader({ onReady }) {
     if (serverReady) {
       if (!isVisible) {
         onReady();
-      } else if (fills[2] === 100) {
-        onReady();
+      } else {
+        setProgress(100);
+        setStepIndex(loadingSteps.length - 1);
+        const timer = setTimeout(() => {
+          onReady();
+        }, 1000);
+        return () => clearTimeout(timer);
       }
     }
-  }, [serverReady, isVisible, fills, onReady]);
-
-  const isDone = serverReady && fills[2] === 100;
-
-  const steps = [
-    { text: 'Initializing your session', sub: 'Spinning up AI engine...' },
-    { text: 'Loading question bank', sub: 'Fetching curated interview sets...' },
-    { text: 'Almost ready!', sub: 'Finalizing your workspace...' },
-  ];
+  }, [serverReady, isVisible, onReady]);
 
   if (!isVisible) return null;
 
-  const chipStyle = (i) => ({
-    display: 'flex',
-    alignItems: 'center',
-    gap: 5,
-    fontSize: 11,
-    padding: '4px 10px',
-    borderRadius: 999,
-    transition: 'all .4s',
-    color: phase >= i ? '#1E75EB' : '#94a3b8',
-    background: phase >= i ? '#EFF6FF' : '#f8fafc',
-    border: `1px solid ${phase >= i ? '#bfdbfe' : '#e2e8f0'}`,
-  });
+  const CurrentIcon = loadingSteps[stepIndex].icon;
 
   return (
-    <div style={styles.overlay}>
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/40 to-white z-[9999] overflow-hidden font-sans"
+    >
+      <motion.div 
+        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-blue-200/30 blur-[100px] pointer-events-none" 
+      />
+      <motion.div 
+        animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.4, 0.2] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-blue-300/20 blur-[100px] pointer-events-none" 
+      />
 
-      <div style={styles.blob1} />
-      <div style={styles.blob2} />
+      <motion.div 
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="relative flex flex-col items-center px-8 py-12 rounded-[2.5rem] bg-white/60 backdrop-blur-3xl shadow-[0_20px_60px_-15px_rgba(37,99,235,0.15)] border border-white/80 max-w-[420px] w-[90%] text-center overflow-hidden group"
+      >
 
-      <div style={styles.card}>
-
-        <div style={styles.accentBar} />
-
-        <div style={styles.brandRow}>
-          <div style={styles.iconBox}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 11l3 3L22 4" />
-              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-            </svg>
-          </div>
-          <span style={styles.brand}>InterviewIQ</span>
+        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-accent to-transparent opacity-70 group-hover:opacity-100 transition-opacity">
+          <motion.div 
+            className="absolute inset-0 bg-white/60"
+            animate={{ x: ['-100%', '100%'] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+          />
         </div>
 
-        <div style={styles.orbWrap}>
-          <div style={{ ...styles.ring, animationDelay: '0s' }} />
-          <div style={{ ...styles.ring, animationDelay: '0.7s' }} />
-          <div style={{ ...styles.ring, animationDelay: '1.4s' }} />
-          <div style={styles.orb}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="8" r="4" />
-              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-            </svg>
-          </div>
+        <div className="relative w-28 h-28 mb-8 flex items-center justify-center">
+          <motion.div 
+            animate={{ rotate: 360 }}
+            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-0 rounded-full border-[1.5px] border-blue-200/40 border-t-accent"
+          />
+
+          <motion.div 
+            animate={{ rotate: -360 }}
+            transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-3 rounded-full border border-blue-200/50 border-b-blue-500"
+          />
+
+          <motion.div 
+            animate={{ scale: [1, 1.15, 1], opacity: [0.7, 1, 0.7] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute inset-8 rounded-full bg-gradient-to-tr from-blue-400 to-accent shadow-[0_0_30px_rgba(37,99,235,0.4)] flex items-center justify-center"
+          >
+             <Sparkles className="w-5 h-5 text-white absolute" />
+          </motion.div>
         </div>
 
-        <div>
-          <p style={styles.title}>
-            {isDone ? "You're all set!" : steps[Math.min(phase, 2)].text}
-          </p>
-          <p style={styles.subtitle}>
-            {isDone ? 'Redirecting to your interview...' : steps[Math.min(phase, 2)].sub}
-          </p>
-        </div>
-
-        <div style={styles.chips}>
-          {['AI Engine', 'Question Bank', 'Ready'].map((label, i) => (
-            <div key={i} style={chipStyle(i)}>
-              <span>{fills[i] === 100 ? '✓' : phase === i ? '✦' : '○'}</span>
-              {label}
-            </div>
-          ))}
-        </div>
-
-        <div style={styles.segments}>
-          {[0, 1, 2].map((i) => (
-            <div key={i} style={styles.segTrack}>
-              <div style={{ ...styles.segFill, width: `${fills[i]}%` }} />
-            </div>
-          ))}
-        </div>
-
-        <div style={styles.noticeBox}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1E75EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
-          <span style={styles.noticeText}>
-            Render's free server is waking up. This only happens once — <strong>future visits load instantly.</strong>
+        <div className="mb-6">
+          <span className="text-2xl font-extrabold tracking-tighter uppercase text-slate-800 drop-shadow-sm">
+            INTERVIEW<span className="text-accent">IQ</span>
           </span>
         </div>
 
-        <style>{`
-          @keyframes ripple { 0% { transform: scale(.6); opacity: .5; } 100% { transform: scale(1.7); opacity: 0; } }
-          @keyframes float1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(30px,-40px) scale(1.08); } }
-          @keyframes float2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-25px,35px) scale(0.94); } }
-          @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        `}</style>
-      </div>
-    </div>
+        <div className="h-16 flex flex-col items-center justify-center mb-8">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={stepIndex}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="flex flex-col items-center gap-2"
+            >
+              <div className="flex items-center gap-2 text-slate-800 font-bold text-lg tracking-tight">
+                <CurrentIcon className="w-5 h-5 text-accent" />
+                <span>{loadingSteps[stepIndex].text}</span>
+              </div>
+              <p className="text-slate-500 text-sm font-medium">Starting in less than 1 minute...</p>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        <div className="w-full h-[6px] bg-slate-100 rounded-full overflow-hidden mb-6 relative shadow-inner">
+          <div 
+            className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-400 to-accent rounded-full transition-all duration-300 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+
+        <p className="text-slate-400/80 text-[13px] font-medium px-2">
+          Render free-tier servers sleep when idle. Hang tight, This loading only happens once!
+        </p>
+
+      </motion.div>
+    </motion.div>
   );
 }
-
-const styles = {
-  overlay: {
-    position: 'fixed',
-    inset: 0,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#ffffff',
-    zIndex: 9999,
-    fontFamily: "'Inter', sans-serif",
-    overflow: 'hidden',
-  },
-
-  blob1: {
-    position: 'absolute',
-    top: '-20%',
-    left: '-10%',
-    width: '50%',
-    height: '50%',
-    borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(30,117,235,0.18), transparent 70%)',
-    filter: 'blur(80px)',
-    pointerEvents: 'none',
-    animation: 'float1 8s ease-in-out infinite',
-  },
-  blob2: {
-    position: 'absolute',
-    bottom: '-20%',
-    right: '-10%',
-    width: '50%',
-    height: '50%',
-    borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(96,165,250,0.15), transparent 70%)',
-    filter: 'blur(80px)',
-    pointerEvents: 'none',
-    animation: 'float2 10s ease-in-out infinite',
-  },
-
-  card: {
-    position: 'relative',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '1.1rem',
-    padding: '2.8rem 3rem',
-    borderRadius: 20,
-    background: '#ffffff',
-    border: '1px solid #e2e8f0',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.05), 0 10px 20px rgba(0,0,0,0.08), 0 30px 50px rgba(0,0,0,0.10)',
-    maxWidth: 400,
-    width: '90%',
-    textAlign: 'center',
-    overflow: 'hidden',
-  },
-  accentBar: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0,
-    height: 3,
-    background: 'linear-gradient(90deg, #1E75EB, #60a5fa, #1E75EB)',
-    backgroundSize: '200% 100%',
-    animation: 'shimmer 2s linear infinite',
-  },
-  brandRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-  },
-  iconBox: {
-    width: 32, height: 32,
-    borderRadius: 10,
-    background: '#1E75EB',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  brand: {
-    fontSize: 11,
-    fontWeight: 500,
-    color: '#64748B',
-    textTransform: 'uppercase',
-    letterSpacing: '.14em',
-  },
-  orbWrap: {
-    position: 'relative',
-    width: 80, height: 80,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ring: {
-    position: 'absolute',
-    inset: 0,
-    borderRadius: '50%',
-    border: '2px solid #1E75EB',
-    opacity: 0.25,
-    animation: 'ripple 2s ease-out infinite',
-  },
-  orb: {
-    width: 44, height: 44,
-    borderRadius: '50%',
-    background: '#1E75EB',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    margin: '0 0 4px',
-    fontSize: '1.1rem',
-    fontWeight: 600,
-    color: '#0B1120',
-  },
-  subtitle: {
-    margin: 0,
-    fontSize: '.82rem',
-    color: '#64748B',
-  },
-  chips: {
-    display: 'flex',
-    gap: 8,
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-  segments: {
-    width: '100%',
-    display: 'flex',
-    gap: 4,
-  },
-  segTrack: {
-    flex: 1,
-    height: 3,
-    borderRadius: 2,
-    background: '#e2e8f0',
-    overflow: 'hidden',
-  },
-  segFill: {
-    height: '100%',
-    background: '#1E75EB',
-    borderRadius: 2,
-    transition: 'width .6s ease',
-  },
-  noticeBox: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: 7,
-    background: '#EFF6FF',
-    border: '1px solid #bfdbfe',
-    borderRadius: 10,
-    padding: '10px 14px',
-    textAlign: 'left',
-    width: '100%',
-    boxSizing: 'border-box',
-  },
-  noticeText: {
-    fontSize: '.72rem',
-    color: '#1E40AF',
-    lineHeight: 1.5,
-  }
-};
